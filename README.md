@@ -29,6 +29,10 @@ include $(FLOW_ROOT)/mk/module.mk
 
 All flows execute from `MODULE_ROOT`, place generated data in the module's
 `work/` and `reports/` directories, and use module-owned configuration paths.
+Portable Make targets automatically install missing pinned open-source tools
+under `${XDG_CACHE_HOME:-$HOME/.cache}/mosaic`. Set `MOSAIC_TOOLS_ROOT` to use a
+different shared cache, or run `make setup-open-source` to prepare it without
+starting a check.
 
 ## Repository quality
 

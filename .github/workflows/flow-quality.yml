@@ -35,23 +35,11 @@ jobs:
       - name: Check out mosaic-flow
         uses: actions/checkout@v4
 
-      - name: Read tool versions
-        id: tool-versions
-        run: |
-          source config/tool-versions.env
-          echo "oss_cad_suite=${OSS_CAD_SUITE_VERSION}" >> "${GITHUB_OUTPUT}"
-
-      - name: Set up OSS CAD Suite
-        uses: YosysHQ/setup-oss-cad-suite@v3
+      - name: Cache open-source tools
+        uses: actions/cache@v4
         with:
-          version: ${{ steps.tool-versions.outputs.oss_cad_suite }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Verible and Slang
-        run: |
-          ci/install_verible.sh "${HOME}/.local"
-          ci/install_slang.sh "${HOME}/.local"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          path: ~/.cache/mosaic
+          key: mosaic-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('config/tool-versions.env') }}
 
       - name: Run complete fixture flow
         run: make -C tests/fixture-module FLOW_ROOT="${GITHUB_WORKSPACE}" clean open-source

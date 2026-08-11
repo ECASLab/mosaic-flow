@@ -1,3 +1,13 @@
+include $(FLOW_ROOT)/config/tool-versions.env
+
+MOSAIC_TOOLS_ROOT ?= $(if $(XDG_CACHE_HOME),$(XDG_CACHE_HOME),$(HOME)/.cache)/mosaic
+OSS_CAD_SUITE_ROOT := $(MOSAIC_TOOLS_ROOT)/oss-cad-suite/$(OSS_CAD_SUITE_VERSION)
+VERIBLE_ROOT := $(MOSAIC_TOOLS_ROOT)/verible/$(VERIBLE_VERSION)
+SLANG_ROOT := $(MOSAIC_TOOLS_ROOT)/slang/$(SLANG_VERSION)
+
+export MOSAIC_TOOLS_ROOT
+export PATH := $(VERIBLE_ROOT)/bin:$(SLANG_ROOT)/bin:$(OSS_CAD_SUITE_ROOT)/bin:$(PATH)
+
 export SIMULATOR ?=vcs
 export SIM_BIN ?=vcs
 export VERILATOR_CMD ?=verilator

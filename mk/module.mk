@@ -1,9 +1,17 @@
 CDC_TOOL ?= vc
 
-.PHONY: help open-source open-lint open-style-lint open-format-check open-elaborate open-synth open-formal open-equivalence open-sim open-quality-gate open-waiver-draft open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-quality-gate
+
+.PHONY: help setup-open-source $(OPEN_SOURCE_TARGETS) open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
 	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk"
+
+## setup-open-source Install missing pinned open-source tools in the user cache
+setup-open-source:
+	@"$(FLOW_ROOT)/ci/setup_open_source_tools.sh"
+
+$(OPEN_SOURCE_TARGETS): | setup-open-source
 
 ## open-source  Run every open-source CI check and its quality gate
 open-source:
