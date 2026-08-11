@@ -30,6 +30,22 @@ include $(FLOW_ROOT)/mk/module.mk
 All flows execute from `MODULE_ROOT`, place generated data in the module's
 `work/` and `reports/` directories, and use module-owned configuration paths.
 
+## Repository quality
+
+`.github/workflows/flow-quality.yml` validates this methodology on every push
+and pull request. Its static job runs Bash syntax checks, ShellCheck, actionlint,
+version-manifest validation, permission checks and quality-gate failure tests.
+Its integration job runs the complete open-source flow against
+`tests/fixture-module` and uploads the resulting reports.
+
+The fixture is intentionally independent of `mosaic-module-template`. Changes
+to flow scripts or pinned tool versions are therefore qualified inside this
+repository before a module updates its `mosaic-flow` revision.
+
+Synopsys tools are not executed by GitHub-hosted runners. Release-specific
+Synopsys adapters that still contain an explicit `error` are placeholders and
+must be configured and qualified in the licensed local environment.
+
 ## Future repository
 
 After publishing this directory as `mosaic-flow`, pin each workspace checkout to

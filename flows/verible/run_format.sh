@@ -6,7 +6,7 @@ mkdir -p "${flow_report_dir}"
 printf 'FAIL\n' > "${flow_report_dir}/status.txt"
 
 mapfile -t sources < <(find rtl verif -type f \( -name '*.sv' -o -name '*.svh' \) -print | sort)
-cd "${REPO_ROOT}"
+cd "${REPO_ROOT}" || exit 2
 : >"${flow_report_dir}/format.log"
 
 for source in "${sources[@]}"; do

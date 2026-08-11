@@ -1,0 +1,14 @@
+[options]
+mode prove
+depth 8
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal -sv flow_fixture.sv flow_fixture_formal.sv
+prep -top flow_fixture_formal
+
+[files]
+rtl/flow_fixture.sv
+verif/formal/flow_fixture_formal.sv

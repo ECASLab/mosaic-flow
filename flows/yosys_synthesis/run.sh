@@ -24,7 +24,7 @@ while IFS= read -r filelist_entry || [[ -n "${filelist_entry}" ]]; do
   esac
 done < "${RTL_FILELIST}"
 
-cd "${REPO_ROOT}"
+cd "${REPO_ROOT}" || exit 2
 "${YOSYS_CMD:-yosys}" -l "${flow_report_dir}/synthesis.log" -p "
   read_verilog ${read_verilog_args};
   hierarchy -check -top ${DESIGN_TOP};

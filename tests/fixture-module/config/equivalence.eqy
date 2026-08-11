@@ -1,0 +1,11 @@
+[gold]
+read_verilog -sv rtl/flow_fixture.sv
+prep -top flow_fixture
+
+[gate]
+read_verilog work/yosys_synthesis/flow_fixture_netlist.v
+prep -top flow_fixture
+
+[strategy sat]
+use sat
+depth 8

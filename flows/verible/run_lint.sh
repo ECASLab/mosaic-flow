@@ -20,7 +20,7 @@ if [[ -n "${rules}" ]]; then
   args+=(--rules_config "${rules}")
 fi
 
-cd "${REPO_ROOT}"
+cd "${REPO_ROOT}" || exit 2
 "${VERIBLE_LINT_CMD:-verible-verilog-lint}" "${args[@]}" "${rtl_files[@]}" \
   2>&1 | tee "${flow_report_dir}/lint.log"
 printf 'PASS\n' > "${flow_report_dir}/status.txt"

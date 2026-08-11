@@ -1,0 +1,65 @@
+name: Flow quality
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-quality:
+    name: Static methodology quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out mosaic-flow
+        uses: actions/checkout@v4
+
+      - name: Install CI quality tools
+        run: |
+          ci/install_ci_tools.sh "${HOME}/.local"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Run static methodology checks
+        run: ci/check_flow_quality.sh
+
+  fixture-integration:
+    name: Open-source fixture integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out mosaic-flow
+        uses: actions/checkout@v4
+
+      - name: Read tool versions
+        id: tool-versions
+        run: |
+          source config/tool-versions.env
+          echo "oss_cad_suite=${OSS_CAD_SUITE_VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up OSS CAD Suite
+        uses: YosysHQ/setup-oss-cad-suite@v3
+        with:
+          version: ${{ steps.tool-versions.outputs.oss_cad_suite }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Verible and Slang
+        run: |
+          ci/install_verible.sh "${HOME}/.local"
+          ci/install_slang.sh "${HOME}/.local"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Run complete fixture flow
+        run: make -C tests/fixture-module FLOW_ROOT="${GITHUB_WORKSPACE}" clean open-source
+
+      - name: Upload fixture reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosaic-flow-fixture-reports
+          path: tests/fixture-module/reports/
+          if-no-files-found: error

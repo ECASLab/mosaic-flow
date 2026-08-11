@@ -1,0 +1,16 @@
+export DESIGN_TOP := flow_fixture
+export TB_TOP := $(DESIGN_TOP)_tb
+export FORMAL_TOP := $(DESIGN_TOP)_formal
+export DUT_INSTANCE := $(TB_TOP)/dut
+export RTL_FILELIST := $(CURDIR)/filelists/rtl.f
+export TB_FILELIST := $(CURDIR)/filelists/tb.f
+export VERILATOR_WAIVER_FILE := $(CURDIR)/config/verilator_waivers.vlt
+export VERIBLE_WAIVER_FILE := $(CURDIR)/config/verible_waivers.txt
+export VERIBLE_RULES_FILE := $(CURDIR)/config/verible.rules
+export FORMAL_CONFIG := $(CURDIR)/config/formal.sby
+export EQUIVALENCE_CONFIG := $(CURDIR)/config/equivalence.eqy
+export OPENROAD_CONFIG := $(CURDIR)/config/openroad.mk
+export CONSTRAINT_DIR := $(CURDIR)/constraints
+export REPORT_DIR := $(CURDIR)/reports
+export WORK_DIR := $(CURDIR)/work
+export ACTIVITY_FILE ?=$(WORK_DIR)/vcs_sim/$(DESIGN_TOP).saif
