@@ -34,6 +34,34 @@ under `${XDG_CACHE_HOME:-$HOME/.cache}/mosaic`. Set `MOSAIC_TOOLS_ROOT` to use a
 different shared cache, or run `make setup-open-source` to prepare it without
 starting a check.
 
+## Flow selection
+
+Shared defaults are defined in `mosaic-flow/config/flows.mk`. A consuming module
+overrides them in its own `config/flows.mk` using explicit states:
+
+```make
+FLOW_symbiyosys_formal := disabled
+FLOW_eqy_equivalence := disabled
+```
+
+`mosaic-flow/mk/module.mk` loads both files, validates every state, and derives
+the internal `DISABLED_FLOWS` list. Every disabled target records `SKIP` and a
+reason under its normal report directory. Quality gates accept `SKIP` only for
+flows disabled by the project configuration and continue to require `PASS` from
+every enabled flow. `DISABLED_FLOWS` remains available as a command-line
+override for compatibility and diagnostics.
+
+Canonical open-source IDs are `verible_lint`, `verible_format`,
+`slang_elaboration`, `verilator_lint`, `yosys_synthesis`,
+`symbiyosys_formal`, `eqy_equivalence`, `verilator_sim`, and `openroad`.
+Canonical commercial IDs are `vcs_sim`, `vc_lint`, `vc_cdc`, `sg_cdc`,
+`sg_dft`, `vc_lp`, `synopsys_synthesis`, `synopsys_primetime`, and
+`synopsys_primepower`. The `cdc` alias disables either selected CDC engine.
+
+`FORCE_FLOW=1` may execute an individually disabled target for diagnostics. It
+does not change the project policy, so the aggregate quality gate still expects
+that flow to be recorded as `SKIP`.
+
 ## Repository quality
 
 `.github/workflows/flow-quality.yml` validates this methodology on every push

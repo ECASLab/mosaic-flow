@@ -1,11 +1,32 @@
-CDC_TOOL ?= vc
+export CDC_TOOL ?= vc
+export FORCE_FLOW ?= 0
+
+include $(FLOW_ROOT)/config/flows.mk
+-include $(MODULE_ROOT)/config/flows.mk
+
+mosaic_flow_state_is_valid = $(and $(filter 1,$(words $(1))),$(filter $(1),enabled disabled))
+MOSAIC_INVALID_FLOW_STATES := $(strip $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(call mosaic_flow_state_is_valid,$(FLOW_$(flow))),,$(flow)=$(FLOW_$(flow)))))
+ifneq ($(MOSAIC_INVALID_FLOW_STATES),)
+$(error Flow states must be 'enabled' or 'disabled': $(MOSAIC_INVALID_FLOW_STATES))
+endif
+
+MOSAIC_EXPLICIT_DISABLED_FLOWS := $(DISABLED_FLOWS)
+override DISABLED_FLOWS := $(sort $(MOSAIC_EXPLICIT_DISABLED_FLOWS) $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter disabled,$(FLOW_$(flow))),$(flow))))
+export DISABLED_FLOWS
+
+FLOW_RUNNER := $(FLOW_ROOT)/ci/run_flow.sh
 
 OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-quality-gate
 
-.PHONY: help setup-open-source $(OPEN_SOURCE_TARGETS) open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+.PHONY: help flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
 	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk"
+
+## flow-config-check Validate and display the project flow selection
+flow-config-check:
+	@printf 'Enabled flows: %s\n' "$(strip $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter enabled,$(FLOW_$(flow))),$(flow))))"
+	@printf 'Disabled flows: %s\n' "$(DISABLED_FLOWS)"
 
 ## setup-open-source Install missing pinned open-source tools in the user cache
 setup-open-source:
@@ -27,19 +48,19 @@ open-source:
 
 ## open-style-lint Run Verible style lint with reviewed waivers
 open-style-lint:
-	@"$(FLOW_ROOT)/flows/verible/run_lint.sh"
+	@"$(FLOW_RUNNER)" verible_lint "$(FLOW_ROOT)/flows/verible/run_lint.sh"
 
 ## open-format-check Check SystemVerilog formatting with Verible
 open-format-check:
-	@"$(FLOW_ROOT)/flows/verible/run_format.sh"
+	@"$(FLOW_RUNNER)" verible_format "$(FLOW_ROOT)/flows/verible/run_format.sh"
 
 ## open-elaborate Compile and elaborate the RTL independently with Slang
 open-elaborate:
-	@"$(FLOW_ROOT)/flows/slang/run.sh"
+	@"$(FLOW_RUNNER)" slang_elaboration "$(FLOW_ROOT)/flows/slang/run.sh"
 
 ## open-lint    Run strict open-source lint with Verilator
 open-lint:
-	@"$(FLOW_ROOT)/flows/verilator_lint/run.sh"
+	@"$(FLOW_RUNNER)" verilator_lint "$(FLOW_ROOT)/flows/verilator_lint/run.sh"
 
 ## open-waiver-draft Generate suggested Verilator waivers for review
 open-waiver-draft:
@@ -47,19 +68,19 @@ open-waiver-draft:
 
 ## open-synth   Run technology-independent synthesis with Yosys
 open-synth:
-	@"$(FLOW_ROOT)/flows/yosys_synthesis/run.sh"
+	@"$(FLOW_RUNNER)" yosys_synthesis "$(FLOW_ROOT)/flows/yosys_synthesis/run.sh"
 
 ## open-formal  Run formal verification with SymbiYosys
 open-formal:
-	@"$(FLOW_ROOT)/flows/symbiyosys/run.sh"
+	@"$(FLOW_RUNNER)" symbiyosys_formal "$(FLOW_ROOT)/flows/symbiyosys/run.sh"
 
 ## open-equivalence Prove RTL-to-synthesized-netlist equivalence with EQY
 open-equivalence:
-	@"$(FLOW_ROOT)/flows/eqy/run.sh"
+	@"$(FLOW_RUNNER)" eqy_equivalence "$(FLOW_ROOT)/flows/eqy/run.sh"
 
 ## open-sim     Compile and simulate with Verilator
 open-sim:
-	@SIMULATOR=verilator "$(FLOW_ROOT)/flows/sim/run.sh"
+	@SIMULATOR=verilator "$(FLOW_RUNNER)" verilator_sim "$(FLOW_ROOT)/flows/sim/run.sh"
 
 ## open-quality-gate Validate all open-source results
 open-quality-gate:
@@ -67,7 +88,7 @@ open-quality-gate:
 
 ## open-physical Run the optional OpenROAD PDK-backed implementation flow
 open-physical:
-	@"$(FLOW_ROOT)/flows/openroad/run.sh"
+	@"$(FLOW_RUNNER)" openroad "$(FLOW_ROOT)/flows/openroad/run.sh"
 
 ## synopsys-check-env Check local Synopsys executable availability
 synopsys-check-env:
@@ -75,23 +96,23 @@ synopsys-check-env:
 
 ## synopsys-sim Compile and simulate locally with VCS
 synopsys-sim:
-	@SIMULATOR=vcs "$(FLOW_ROOT)/flows/sim/run.sh"
+	@SIMULATOR=vcs "$(FLOW_RUNNER)" vcs_sim "$(FLOW_ROOT)/flows/sim/run.sh"
 
 ## synopsys-lint Run VC Lint locally
 synopsys-lint:
-	@"$(FLOW_ROOT)/flows/vc_lint/run.sh"
+	@"$(FLOW_RUNNER)" vc_lint "$(FLOW_ROOT)/flows/vc_lint/run.sh"
 
 ## synopsys-cdc Run CDC locally with CDC_TOOL=vc or CDC_TOOL=sg
 synopsys-cdc:
-	@"$(FLOW_ROOT)/flows/cdc/run.sh" "$(CDC_TOOL)"
+	@"$(FLOW_RUNNER)" "$(CDC_TOOL)_cdc" "$(FLOW_ROOT)/flows/cdc/run.sh" "$(CDC_TOOL)"
 
 ## synopsys-dft Run SpyGlass DFT checks locally
 synopsys-dft:
-	@"$(FLOW_ROOT)/flows/sg_dft/run.sh"
+	@"$(FLOW_RUNNER)" sg_dft "$(FLOW_ROOT)/flows/sg_dft/run.sh"
 
 ## synopsys-lp  Run VC LP checks locally
 synopsys-lp:
-	@"$(FLOW_ROOT)/flows/vc_lp/run.sh"
+	@"$(FLOW_RUNNER)" vc_lp "$(FLOW_ROOT)/flows/vc_lp/run.sh"
 
 ## synopsys-static Run all local Synopsys static RTL checks
 synopsys-static:
@@ -102,15 +123,15 @@ synopsys-static:
 
 ## synopsys-synth Run technology-mapped synthesis locally
 synopsys-synth:
-	@"$(FLOW_ROOT)/flows/synthesis/run.sh"
+	@"$(FLOW_RUNNER)" synopsys_synthesis "$(FLOW_ROOT)/flows/synthesis/run.sh"
 
 ## synopsys-sta Run PrimeTime static timing analysis locally
 synopsys-sta:
-	@"$(FLOW_ROOT)/flows/primetime/run.sh"
+	@"$(FLOW_RUNNER)" synopsys_primetime "$(FLOW_ROOT)/flows/primetime/run.sh"
 
 ## synopsys-power Run PrimePower locally using annotated activity
 synopsys-power:
-	@"$(FLOW_ROOT)/flows/primepower/run.sh"
+	@"$(FLOW_RUNNER)" synopsys_primepower "$(FLOW_ROOT)/flows/primepower/run.sh"
 
 ## synopsys-quality-gate Validate all commercial-tool results
 synopsys-quality-gate:
