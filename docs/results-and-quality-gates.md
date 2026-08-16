@@ -15,7 +15,8 @@ logs, and compact summaries. Work directories contain generated executables,
 netlists, proof databases, and tool state.
 
 `make clean` removes the complete work tree and every item below `reports/`
-except `.gitkeep`.
+except `.gitkeep`. It is idempotent and succeeds when either generated root does
+not exist, including on a fresh module checkout.
 
 ## Status contract
 

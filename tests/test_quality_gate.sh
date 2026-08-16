@@ -3,7 +3,27 @@ set -euo pipefail
 
 flow_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 report_root="$(mktemp -d)"
-trap 'rm -rf "${report_root}"' EXIT
+clean_root="$(mktemp -d)"
+trap 'rm -rf "${report_root}" "${clean_root}"' EXIT
+
+MODULE_ROOT="${clean_root}" "${flow_root}/ci/clean.sh"
+
+mkdir -p "${clean_root}/work" "${clean_root}/reports"
+touch "${clean_root}/work/generated.db"
+touch "${clean_root}/reports/.gitkeep" "${clean_root}/reports/stale.log"
+MODULE_ROOT="${clean_root}" "${flow_root}/ci/clean.sh"
+if [[ -e "${clean_root}/work" ]]; then
+  echo "Clean retained the generated work tree" >&2
+  exit 1
+fi
+if [[ -e "${clean_root}/reports/stale.log" ]]; then
+  echo "Clean retained a generated report" >&2
+  exit 1
+fi
+if [[ ! -e "${clean_root}/reports/.gitkeep" ]]; then
+  echo "Clean removed the report directory placeholder" >&2
+  exit 1
+fi
 
 fixture_root="${flow_root}/tests/fixture-module"
 flow_config_output="$(make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
