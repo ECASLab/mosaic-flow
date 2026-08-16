@@ -1,99 +1,77 @@
 # mosaic-flow
 
-Shared RTL quality and implementation methodology for MOSAIC module
-repositories. It is maintained as a sibling of the module repositories and is
-intended to become an independently versioned GitHub repository.
+Shared RTL quality and implementation methodology for MOSAIC repositories. It
+provides one versioned interface for open-source CI checks and licensed local
+implementation flows.
 
-## Ownership
+Modular repositories consume `mosaic-flow` at a pinned Git revision, normally as
+an in-tree `mosaic-flow/` submodule. Updating that pointer upgrades the
+methodology without copying flow scripts or changing module RTL.
 
-`mosaic-flow` owns:
+## What belongs here
 
+`mosaic-flow` owns reusable methodology:
+
+- Make targets and flow dependency orchestration
 - Open-source and Synopsys tool adapters
-- Quality gates and report contracts
-- Tool installation scripts and pinned versions
-- Shared Make targets
-- OpenROAD integration
+- Flow selection, statuses, reports, and quality gates
+- Pinned open-source tool installers and versions
+- Methodology CI and its independent fixture module
 
-The consuming module owns its RTL, verification, file lists, constraints,
-waivers and design-specific formal, equivalence and OpenROAD configurations.
+The consuming module owns RTL, verification, file lists, constraints, waivers,
+formal properties, power intent, and design-specific flow configuration.
 
-## Consumer contract
+## Documentation
 
-The module Makefile exports `MODULE_ROOT`, sets `FLOW_ROOT`, includes its own
-`config/design.mk`, and then includes:
+The [documentation index](docs/README.md) is the detailed entry point for new
+users and contributors. It provides a recommended reading order, a command
+reference, and links to:
+
+- Repository architecture and ownership boundaries
+- Consumer setup and configuration overrides
+- Every open-source and commercial flow
+- Results, quality gates, waivers, and release evidence
+- Methodology development, qualification, and release procedures
+
+## Consumer quick start
+
+From a module repository with the submodule already configured:
+
+```sh
+git submodule update --init --recursive
+make flow-config-check
+make open-source
+```
+
+The module's thin Makefile imports the shared API:
 
 ```make
+export MODULE_ROOT := $(CURDIR)
+export FLOW_ROOT ?= $(abspath $(MODULE_ROOT)/mosaic-flow)
+
+include config/design.mk
 include $(FLOW_ROOT)/config/tools.mk
 include $(FLOW_ROOT)/mk/module.mk
 ```
 
-All flows execute from `MODULE_ROOT`, place generated data in the module's
-`work/` and `reports/` directories, and use module-owned configuration paths.
-Portable Make targets automatically install missing pinned open-source tools
-under `${XDG_CACHE_HOME:-$HOME/.cache}/mosaic`. Set `MOSAIC_TOOLS_ROOT` to use a
-different shared cache, or run `make setup-open-source` to prepare it without
-starting a check.
+See [Getting started](docs/getting-started.md) for the complete module contract
+and [Configuration](docs/configuration.md) for flow selection, dependencies,
+tool overrides, and technology setup.
 
-## Flow selection
+## Methodology validation
 
-Shared defaults are defined in `mosaic-flow/config/flows.mk`. A consuming module
-overrides them in its own `config/flows.mk` using explicit states:
+Before releasing a change to this repository, run its static checks and the
+complete portable fixture flow:
 
-```make
-FLOW_symbiyosys_formal := disabled
-FLOW_eqy_equivalence := disabled
+```sh
+ci/install_ci_tools.sh "$HOME/.local"
+PATH="$HOME/.local/bin:$PATH" ci/check_flow_quality.sh
+make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
 ```
 
-`mosaic-flow/mk/module.mk` loads both files, validates every state, and derives
-the internal `DISABLED_FLOWS` list. Every disabled target records `SKIP` and a
-reason under its normal report directory. Quality gates accept `SKIP` only for
-flows disabled by the project configuration and continue to require `PASS` from
-every enabled flow. `DISABLED_FLOWS` remains available as a command-line
-override for compatibility and diagnostics.
+GitHub Actions runs the same validation on pushes and pull requests. Commercial
+Synopsys tools are not run on GitHub-hosted runners. Release-specific commercial
+adapters must be configured and qualified in the licensed local environment.
 
-Flow dependencies use canonical flow IDs in the same files:
-
-```make
-FLOW_DEPENDENCIES_eqy_equivalence := yosys_synthesis
-FLOW_DEPENDENCIES_synopsys_primepower := vcs_sim synopsys_synthesis
-```
-
-The shared defaults describe artifact dependencies and a module may replace any
-list. `make flow-config-check` rejects unknown flows, self dependencies, cycles,
-and enabled flows that depend on disabled flows. Make builds the resulting graph
-before running a target, so prerequisites must finish successfully even with
-parallel execution. The flow runner also requires every dependency report to
-contain `PASS`. Otherwise, it records `BLOCKED` and does not launch the tool.
-
-Canonical open-source IDs are `verible_lint`, `verible_format`,
-`slang_elaboration`, `verilator_lint`, `yosys_synthesis`,
-`symbiyosys_formal`, `eqy_equivalence`, `verilator_sim`, and `openroad`.
-Canonical commercial IDs are `vcs_sim`, `vc_lint`, `vc_cdc`, `sg_cdc`,
-`sg_dft`, `vc_lp`, `synopsys_synthesis`, `synopsys_primetime`, and
-`synopsys_primepower`. The `cdc` alias disables either selected CDC engine.
-
-`FORCE_FLOW=1` may execute an individually disabled target for diagnostics. It
-does not change the project policy, so the aggregate quality gate still expects
-that flow to be recorded as `SKIP`.
-
-## Repository quality
-
-`.github/workflows/flow-quality.yml` validates this methodology on every push
-and pull request. Its static job runs Bash syntax checks, ShellCheck, actionlint,
-version-manifest validation, permission checks and quality-gate failure tests.
-Its integration job runs the complete open-source flow against
-`tests/fixture-module` and uploads the resulting reports.
-
-The fixture is intentionally independent of `mosaic-module-template`. Changes
-to flow scripts or pinned tool versions are therefore qualified inside this
-repository before a module updates its `mosaic-flow` revision.
-
-Synopsys tools are not executed by GitHub-hosted runners. Release-specific
-Synopsys adapters that still contain an explicit `error` are placeholders and
-must be configured and qualified in the licensed local environment.
-
-## Future repository
-
-After publishing this directory as `mosaic-flow`, pin each workspace checkout to
-a release tag or commit SHA. Updating that revision then updates the methodology
-and tool-version manifest without modifying module RTL or constraints.
+See [Methodology development](docs/development.md) for the full contribution and
+release checklist.
