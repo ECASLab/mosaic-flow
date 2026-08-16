@@ -51,6 +51,20 @@ flows disabled by the project configuration and continue to require `PASS` from
 every enabled flow. `DISABLED_FLOWS` remains available as a command-line
 override for compatibility and diagnostics.
 
+Flow dependencies use canonical flow IDs in the same files:
+
+```make
+FLOW_DEPENDENCIES_eqy_equivalence := yosys_synthesis
+FLOW_DEPENDENCIES_synopsys_primepower := vcs_sim synopsys_synthesis
+```
+
+The shared defaults describe artifact dependencies and a module may replace any
+list. `make flow-config-check` rejects unknown flows, self dependencies, cycles,
+and enabled flows that depend on disabled flows. Make builds the resulting graph
+before running a target, so prerequisites must finish successfully even with
+parallel execution. The flow runner also requires every dependency report to
+contain `PASS`. Otherwise, it records `BLOCKED` and does not launch the tool.
+
 Canonical open-source IDs are `verible_lint`, `verible_format`,
 `slang_elaboration`, `verilator_lint`, `yosys_synthesis`,
 `symbiyosys_formal`, `eqy_equivalence`, `verilator_sim`, and `openroad`.

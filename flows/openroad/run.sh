@@ -7,4 +7,5 @@ if [[ -z "${OPENROAD_FLOW_ROOT:-}" ]]; then
   exit 2
 fi
 
-make -C "${OPENROAD_FLOW_ROOT}/flow" DESIGN_CONFIG="${OPENROAD_CONFIG}"
+run_and_record openroad make -C "${OPENROAD_FLOW_ROOT}/flow" \
+  DESIGN_CONFIG="${OPENROAD_CONFIG}"

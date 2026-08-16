@@ -16,3 +16,7 @@ FLOW_vc_lp := enabled
 FLOW_synopsys_synthesis := enabled
 FLOW_synopsys_primetime := enabled
 FLOW_synopsys_primepower := enabled
+
+FLOW_DEPENDENCIES_eqy_equivalence := yosys_synthesis
+FLOW_DEPENDENCIES_synopsys_primetime := synopsys_synthesis
+FLOW_DEPENDENCIES_synopsys_primepower := vcs_sim synopsys_synthesis

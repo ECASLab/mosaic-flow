@@ -13,9 +13,71 @@ if ! grep -q 'Disabled flows: symbiyosys_formal' <<< "${flow_config_output}"; th
   exit 1
 fi
 
+if ! grep -q 'eqy_equivalence: yosys_synthesis' <<< "${flow_config_output}"; then
+  echo "Resolved flow configuration did not report dependencies" >&2
+  exit 1
+fi
+
 if make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
    FLOW_symbiyosys_formal=invalid flow-config-check >/dev/null 2>&1; then
   echo "Flow configuration accepted an invalid state" >&2
+  exit 1
+fi
+
+if make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
+   FLOW_DEPENDENCIES_eqy_equivalence=missing_flow flow-config-check >/dev/null 2>&1; then
+  echo "Flow configuration accepted an unknown dependency" >&2
+  exit 1
+fi
+
+if make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
+   FLOW_DEPENDENCIES_eqy_equivalence=eqy_equivalence flow-config-check >/dev/null 2>&1; then
+  echo "Flow configuration accepted a self dependency" >&2
+  exit 1
+fi
+
+if make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
+   FLOW_DEPENDENCIES_eqy_equivalence=yosys_synthesis \
+   FLOW_DEPENDENCIES_yosys_synthesis=eqy_equivalence \
+   flow-config-check >/dev/null 2>&1; then
+  echo "Flow configuration accepted a dependency cycle" >&2
+  exit 1
+fi
+
+if make -s -C "${fixture_root}" FLOW_ROOT="${flow_root}" \
+   FLOW_yosys_synthesis=disabled flow-config-check >/dev/null 2>&1; then
+  echo "Enabled flow accepted a disabled dependency" >&2
+  exit 1
+fi
+
+minimal_flow_environment=(
+  "MOSAIC_FLOW_IDS=yosys_synthesis symbiyosys_formal eqy_equivalence"
+  "FLOW_yosys_synthesis=enabled"
+  "FLOW_symbiyosys_formal=disabled"
+  "FLOW_eqy_equivalence=enabled"
+  "FLOW_DEPENDENCIES_yosys_synthesis="
+  "FLOW_DEPENDENCIES_symbiyosys_formal="
+  "FLOW_DEPENDENCIES_eqy_equivalence=yosys_synthesis"
+)
+
+if env "${minimal_flow_environment[@]}" \
+   DISABLED_FLOWS=symbiyosys_formal REPORT_DIR="${report_root}" MODULE_ROOT="${report_root}" \
+   "${flow_root}/ci/run_flow.sh" eqy_equivalence true >/dev/null 2>&1; then
+  echo "Flow runner executed with a missing dependency result" >&2
+  exit 1
+fi
+if [[ "$(<"${report_root}/eqy_equivalence/status.txt")" != "BLOCKED" ]]; then
+  echo "Flow runner did not record a blocked dependency" >&2
+  exit 1
+fi
+
+mkdir -p "${report_root}/yosys_synthesis"
+printf 'PASS\n' > "${report_root}/yosys_synthesis/status.txt"
+env "${minimal_flow_environment[@]}" \
+  DISABLED_FLOWS=symbiyosys_formal REPORT_DIR="${report_root}" MODULE_ROOT="${report_root}" \
+  "${flow_root}/ci/run_flow.sh" eqy_equivalence true >/dev/null
+if [[ -e "${report_root}/eqy_equivalence/block_reason.txt" ]]; then
+  echo "Flow runner retained stale blocked evidence after dependencies passed" >&2
   exit 1
 fi
 
@@ -51,7 +113,8 @@ if DISABLED_FLOWS=symbiyosys_formal REPORT_DIR="${report_root}" \
 fi
 
 rm -rf "${report_root}/symbiyosys_formal"
-DISABLED_FLOWS=symbiyosys_formal REPORT_DIR="${report_root}" MODULE_ROOT="${report_root}" \
+env "${minimal_flow_environment[@]}" \
+  DISABLED_FLOWS=symbiyosys_formal REPORT_DIR="${report_root}" MODULE_ROOT="${report_root}" \
   "${flow_root}/ci/run_flow.sh" symbiyosys_formal false >/dev/null
 if [[ "$(<"${report_root}/symbiyosys_formal/status.txt")" != "SKIP" ]]; then
   echo "Disabled flow runner did not record SKIP" >&2

@@ -13,10 +13,39 @@ endif
 MOSAIC_EXPLICIT_DISABLED_FLOWS := $(DISABLED_FLOWS)
 override DISABLED_FLOWS := $(sort $(MOSAIC_EXPLICIT_DISABLED_FLOWS) $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter disabled,$(FLOW_$(flow))),$(flow))))
 export DISABLED_FLOWS
+export MOSAIC_FLOW_IDS
+export $(foreach flow,$(MOSAIC_FLOW_IDS),FLOW_$(flow) FLOW_DEPENDENCIES_$(flow))
 
 FLOW_RUNNER := $(FLOW_ROOT)/ci/run_flow.sh
 
 OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-quality-gate
+OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim
+
+FLOW_TARGET_verible_lint := open-style-lint
+FLOW_TARGET_verible_format := open-format-check
+FLOW_TARGET_slang_elaboration := open-elaborate
+FLOW_TARGET_verilator_lint := open-lint
+FLOW_TARGET_yosys_synthesis := open-synth
+FLOW_TARGET_symbiyosys_formal := open-formal
+FLOW_TARGET_eqy_equivalence := open-equivalence
+FLOW_TARGET_verilator_sim := open-sim
+FLOW_TARGET_openroad := open-physical
+FLOW_TARGET_vcs_sim := synopsys-sim
+FLOW_TARGET_vc_lint := synopsys-lint
+FLOW_TARGET_vc_cdc := $(if $(filter vc,$(CDC_TOOL)),synopsys-cdc)
+FLOW_TARGET_sg_cdc := $(if $(filter sg,$(CDC_TOOL)),synopsys-cdc)
+FLOW_TARGET_sg_dft := synopsys-dft
+FLOW_TARGET_vc_lp := synopsys-lp
+FLOW_TARGET_synopsys_synthesis := synopsys-synth
+FLOW_TARGET_synopsys_primetime := synopsys-sta
+FLOW_TARGET_synopsys_primepower := synopsys-power
+
+MOSAIC_FLOW_TARGETS := $(sort $(foreach flow,$(MOSAIC_FLOW_IDS),$(FLOW_TARGET_$(flow))))
+
+define mosaic_add_flow_dependencies
+$(FLOW_TARGET_$(1)): $(foreach dependency,$(FLOW_DEPENDENCIES_$(1)),$(FLOW_TARGET_$(dependency)))
+endef
+$(foreach flow,$(MOSAIC_FLOW_IDS),$(eval $(call mosaic_add_flow_dependencies,$(flow))))
 
 .PHONY: help flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
@@ -25,26 +54,17 @@ help:
 
 ## flow-config-check Validate and display the project flow selection
 flow-config-check:
-	@printf 'Enabled flows: %s\n' "$(strip $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter enabled,$(FLOW_$(flow))),$(flow))))"
-	@printf 'Disabled flows: %s\n' "$(DISABLED_FLOWS)"
+	@"$(FLOW_ROOT)/ci/check_flow_config.sh"
 
 ## setup-open-source Install missing pinned open-source tools in the user cache
 setup-open-source:
 	@"$(FLOW_ROOT)/ci/setup_open_source_tools.sh"
 
-$(OPEN_SOURCE_TARGETS): | setup-open-source
+$(MOSAIC_FLOW_TARGETS): | flow-config-check
+$(OPEN_FLOW_TARGETS) open-waiver-draft: | setup-open-source
 
 ## open-source  Run every open-source CI check and its quality gate
-open-source:
-	@$(MAKE) open-style-lint
-	@$(MAKE) open-format-check
-	@$(MAKE) open-elaborate
-	@$(MAKE) open-lint
-	@$(MAKE) open-synth
-	@$(MAKE) open-formal
-	@$(MAKE) open-equivalence
-	@$(MAKE) open-sim
-	@$(MAKE) open-quality-gate
+open-source: open-quality-gate
 
 ## open-style-lint Run Verible style lint with reviewed waivers
 open-style-lint:
@@ -83,7 +103,7 @@ open-sim:
 	@SIMULATOR=verilator "$(FLOW_RUNNER)" verilator_sim "$(FLOW_ROOT)/flows/sim/run.sh"
 
 ## open-quality-gate Validate all open-source results
-open-quality-gate:
+open-quality-gate: $(OPEN_FLOW_TARGETS)
 	@"$(FLOW_ROOT)/ci/open_source_quality_gate.sh"
 
 ## open-physical Run the optional OpenROAD PDK-backed implementation flow
@@ -115,11 +135,7 @@ synopsys-lp:
 	@"$(FLOW_RUNNER)" vc_lp "$(FLOW_ROOT)/flows/vc_lp/run.sh"
 
 ## synopsys-static Run all local Synopsys static RTL checks
-synopsys-static:
-	@$(MAKE) synopsys-lint
-	@$(MAKE) synopsys-cdc CDC_TOOL="$(CDC_TOOL)"
-	@$(MAKE) synopsys-dft
-	@$(MAKE) synopsys-lp
+synopsys-static: synopsys-lint synopsys-cdc synopsys-dft synopsys-lp
 
 ## synopsys-synth Run technology-mapped synthesis locally
 synopsys-synth:
@@ -134,18 +150,11 @@ synopsys-power:
 	@"$(FLOW_RUNNER)" synopsys_primepower "$(FLOW_ROOT)/flows/primepower/run.sh"
 
 ## synopsys-quality-gate Validate all commercial-tool results
-synopsys-quality-gate:
+synopsys-quality-gate: synopsys-sim synopsys-static synopsys-synth synopsys-sta synopsys-power | synopsys-check-env
 	@"$(FLOW_ROOT)/ci/synopsys_quality_gate.sh"
 
 ## synopsys-all Run the complete licensed local Synopsys flow
-synopsys-all:
-	@$(MAKE) synopsys-check-env
-	@$(MAKE) synopsys-sim
-	@$(MAKE) synopsys-static CDC_TOOL="$(CDC_TOOL)"
-	@$(MAKE) synopsys-synth
-	@$(MAKE) synopsys-sta
-	@$(MAKE) synopsys-power
-	@$(MAKE) synopsys-quality-gate
+synopsys-all: synopsys-quality-gate
 
 ## clean        Remove generated work and reports
 clean:

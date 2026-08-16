@@ -38,3 +38,24 @@ FLOW_vc_lp ?= enabled
 FLOW_synopsys_synthesis ?= enabled
 FLOW_synopsys_primetime ?= enabled
 FLOW_synopsys_primepower ?= enabled
+
+# Dependencies use canonical flow IDs. Projects may replace any dependency
+# list in their module-owned config/flows.mk.
+FLOW_DEPENDENCIES_verible_lint ?=
+FLOW_DEPENDENCIES_verible_format ?=
+FLOW_DEPENDENCIES_slang_elaboration ?=
+FLOW_DEPENDENCIES_verilator_lint ?=
+FLOW_DEPENDENCIES_yosys_synthesis ?=
+FLOW_DEPENDENCIES_symbiyosys_formal ?=
+FLOW_DEPENDENCIES_eqy_equivalence ?= yosys_synthesis
+FLOW_DEPENDENCIES_verilator_sim ?=
+FLOW_DEPENDENCIES_openroad ?=
+FLOW_DEPENDENCIES_vcs_sim ?=
+FLOW_DEPENDENCIES_vc_lint ?=
+FLOW_DEPENDENCIES_vc_cdc ?=
+FLOW_DEPENDENCIES_sg_cdc ?=
+FLOW_DEPENDENCIES_sg_dft ?=
+FLOW_DEPENDENCIES_vc_lp ?=
+FLOW_DEPENDENCIES_synopsys_synthesis ?=
+FLOW_DEPENDENCIES_synopsys_primetime ?= synopsys_synthesis
+FLOW_DEPENDENCIES_synopsys_primepower ?= vcs_sim synopsys_synthesis
