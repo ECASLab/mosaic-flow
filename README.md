@@ -14,6 +14,7 @@ methodology without copying flow scripts or changing module RTL.
 
 - Make targets and flow dependency orchestration
 - Open-source and Synopsys tool adapters
+- Optional PyUVM verification with open-source, VCS, and Xcelium backends
 - Flow selection, statuses, reports, and quality gates
 - Pinned open-source tool installers and versions
 - Methodology CI and its independent fixture module
@@ -29,6 +30,7 @@ reference, and links to:
 
 - Repository architecture and ownership boundaries
 - Consumer setup and configuration overrides
+- PyUVM, SVA, and coverage reuse across verification environments
 - Every open-source and commercial flow
 - Results, quality gates, waivers, and release evidence
 - Methodology development, qualification, and release procedures

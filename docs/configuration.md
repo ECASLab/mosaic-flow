@@ -157,6 +157,9 @@ The shared environment adapter requires these variables for every tool adapter:
 | `DUT_INSTANCE` | Hierarchical DUT instance used for activity annotation |
 | `RTL_FILELIST` | Ordered synthesizable source file list |
 | `TB_FILELIST` | Ordered simulation source file list |
+| `PROPERTY_FILELIST` | Shared SystemVerilog property and sequence dependencies |
+| `ASSERTION_FILELIST` | Shared SystemVerilog assertion and bind file list |
+| `COVERAGE_FILELIST` | Shared SystemVerilog coverage model and bind file list |
 | `CONSTRAINT_DIR` | Directory containing synthesis `timing.sdc` |
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
@@ -169,6 +172,7 @@ Flow-specific inputs are required when their flow is enabled:
 | `VERIBLE_WAIVER_FILE` | Verible lint |
 | `VERIBLE_RULES_FILE` | Verible lint |
 | `FORMAL_CONFIG` | SymbiYosys |
+| `FORMAL_COVER_CONFIG` | SymbiYosys cover reachability task |
 | `EQUIVALENCE_CONFIG` | EQY |
 | `OPENROAD_CONFIG` | OpenROAD Flow Scripts |
 | `SYNTHESIS_CONSTRAINT_FILE` | Module convention for synthesis SDC |
@@ -177,6 +181,81 @@ Flow-specific inputs are required when their flow is enabled:
 | `UPF_CONFIG` | VC LP adapter |
 | `OPENROAD_PLATFORM` | Platform selected by the module's OpenROAD config |
 | `ACTIVITY_FILE` | SAIF consumed by PrimePower |
+| `PYUVM_TEST_MODULE` | Importable Python module containing the PyUVM tests |
+| `PYUVM_FILELIST` | RTL file list compiled for the PyUVM top |
+| `PYUVM_TOP` | HDL top visible to cocotb, defaulting to `DESIGN_TOP` |
+| `PYUVM_TEST_PATH` | Directory prepended to the Python import path |
+| `PYUVM_OPEN_SIMULATOR` | Open-source cocotb simulator, `verilator` by default |
+| `PYUVM_COMMERCIAL_SIMULATOR` | Commercial simulator, `vcs` by default |
+| `PYUVM_COVERAGE` | Enable simulator-native coverage with `enabled` or `disabled` |
+| `PYUVM_WAVES` | Enable waveform generation with `enabled` or `disabled` |
+| `PYUVM_TESTCASE` | Optional PyUVM test class filter |
+| `PYUVM_COMPILE_ARGS` | Additional shell-parsed simulator compile arguments |
+| `PYUVM_RUN_ARGS` | Additional shell-parsed simulator run arguments |
+| `PYUVM_PLUSARGS` | Additional shell-parsed HDL plusargs |
+| `SIM_COVERAGE` | Enable native coverage in normal simulation |
+
+PyUVM is opt-in. A module enables its portable and commercial policies
+independently:
+
+```make
+FLOW_pyuvm_open_source := enabled
+FLOW_pyuvm_commercial := disabled
+
+export PYUVM_TEST_MODULE := test_my_module
+export PROPERTY_FILELIST := $(MODULE_ROOT)/filelists/properties.f
+export ASSERTION_FILELIST := $(MODULE_ROOT)/filelists/assertions.f
+export COVERAGE_FILELIST := $(MODULE_ROOT)/filelists/coverage.f
+export FORMAL_COVER_CONFIG := $(FLOW_CONFIG_ROOT)/symbiyosys/formal_cover.sby
+```
+
+When `pyuvm_open_source` is enabled, `make open-source` runs it and the
+open-source quality gate requires `PASS`. A disabled PyUVM flow records `SKIP`.
+VCS and Xcelium remain explicit local flows and are never required by the
+GitHub-hosted methodology workflow.
+
+Run the configured backends with:
+
+```sh
+make open-pyuvm
+make PYUVM_COMMERCIAL_SIMULATOR=vcs commercial-pyuvm
+make PYUVM_COMMERCIAL_SIMULATOR=xcelium commercial-pyuvm
+```
+
+The PyUVM filelist parser accepts source paths, `+incdir+`, `+define+`, and
+nested `-f` or `-F` entries. Put simulator-specific options in
+`PYUVM_COMPILE_ARGS` instead of a shared filelist.
+
+`PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and `COVERAGE_FILELIST` keep reusable
+temporal definitions, checking directives, and coverage directives separate.
+Normal SystemVerilog simulation and PyUVM compile the lists in that order. The
+module's SymbiYosys proof and cover configurations must read the corresponding
+sources in their `[script]` and `[files]` sections.
+
+For broad simulator compatibility, keep module-specific sequences in one
+`.svh` file and compose them into properties in a second `.svh` file. Include
+the property file inside each assertion or coverage wrapper module. Packages may
+be used only after every required simulator and formal frontend has qualified
+that construct. Prefer named, interface-specific properties over generic
+properties with untyped formal arguments, which are not implemented
+consistently by current open-source SystemVerilog frontends.
+
+The Yosys frontend does not support every concurrent SVA construct. A wrapper
+may select an equivalent procedural implementation only when
+`MOSAIC_YOSYS_FORMAL` is defined, while keeping both implementations in the same
+source module. Other formal tools should use the shared concurrent properties.
+
+Do not assume that the Yosys frontend applies a simulation-oriented `bind`.
+Keep each assertion or coverage model inside a reusable wrapper. Bind that
+wrapper to the DUT when `MOSAIC_FORMAL` is not defined, and explicitly
+instantiate the same wrapper in the formal harness when `MOSAIC_FORMAL` is
+defined. This preserves one verification wrapper without allowing a vacuous
+formal run.
+
+When `COVERAGE_FILELIST` is nonempty, `FORMAL_COVER_CONFIG` is required and
+`open-formal` runs both the proof and cover reachability tasks. `SIM_COVERAGE`
+defaults to `enabled`. Verilator exports `coverage.dat` and `coverage.info`,
+while VCS retains its native `coverage.vdb` database.
 
 The current Design Compiler adapter reads
 `$(CONSTRAINT_DIR)/timing.sdc`. Keep `SYNTHESIS_CONSTRAINT_FILE` consistent with

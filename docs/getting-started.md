@@ -65,10 +65,15 @@ export DUT_INSTANCE := $(TB_TOP)/dut
 export FLOW_CONFIG_ROOT := $(MODULE_ROOT)/flows
 export RTL_FILELIST := $(MODULE_ROOT)/filelists/rtl.f
 export TB_FILELIST := $(MODULE_ROOT)/filelists/tb.f
+export PROPERTY_FILELIST := $(MODULE_ROOT)/filelists/properties.f
+export ASSERTION_FILELIST := $(MODULE_ROOT)/filelists/assertions.f
+export COVERAGE_FILELIST := $(MODULE_ROOT)/filelists/coverage.f
+export PYUVM_TEST_MODULE := test_my_module
 export VERILATOR_WAIVER_FILE := $(FLOW_CONFIG_ROOT)/verilator_lint/waivers.vlt
 export VERIBLE_WAIVER_FILE := $(FLOW_CONFIG_ROOT)/verible/waivers.txt
 export VERIBLE_RULES_FILE := $(FLOW_CONFIG_ROOT)/verible/rules
 export FORMAL_CONFIG := $(FLOW_CONFIG_ROOT)/symbiyosys/formal.sby
+export FORMAL_COVER_CONFIG := $(FLOW_CONFIG_ROOT)/symbiyosys/formal_cover.sby
 export EQUIVALENCE_CONFIG := $(FLOW_CONFIG_ROOT)/eqy/equivalence.eqy
 export OPENROAD_CONFIG := $(FLOW_CONFIG_ROOT)/openroad/config.mk
 export SYNTHESIS_CONSTRAINT_FILE := $(FLOW_CONFIG_ROOT)/synthesis/timing.sdc
@@ -90,6 +95,72 @@ not be portable.
 See [Configuration](configuration.md#design-and-path-variables) for optional
 technology variables and the exact meaning of each setting.
 
+## Understand PyUVM, SVA, and coverage
+
+PyUVM does not import or call SystemVerilog assertions from Python. PyUVM
+provides stimulus, sequencing, and Python-side checking. Cocotb connects that
+Python environment to an HDL simulator, and the simulator compiles and executes
+the DUT, assertions, and SystemVerilog coverage together.
+
+```text
+PyUVM test
+    |
+    | drives and observes signals through cocotb
+    v
+HDL simulator
+    |-- DUT from PYUVM_FILELIST
+    |-- sequences and properties from PROPERTY_FILELIST
+    |-- assertion wrappers from ASSERTION_FILELIST
+    `-- coverage wrappers from COVERAGE_FILELIST
+```
+
+The relationship is established during compilation:
+
+1. The PyUVM adapter reads `PYUVM_FILELIST`, `PROPERTY_FILELIST`,
+   `ASSERTION_FILELIST`, and `COVERAGE_FILELIST` in that order.
+2. It passes the resulting sources, include directories, and definitions to the
+   cocotb simulator runner.
+3. Assertion and coverage bind files attach their wrapper modules to the DUT.
+4. The Python test drives the DUT while the simulator evaluates the bound SVA
+   and cover properties concurrently.
+5. A terminating SVA failure causes the simulator and PyUVM flow to fail. The
+   flow records `FAIL` even if the Python stimulus itself completed correctly.
+
+A module should keep each verification concern in its own source area:
+
+```text
+verif/
+|-- properties/             Shared sequences and properties
+|-- assertions/             assert property directives and bind wrapper
+|-- coverage/               cover property directives and bind wrapper
+|-- formal/                 Formal harness
+`-- pyuvm/                  Python tests, agents, monitors, and scoreboards
+
+filelists/
+|-- properties.f
+|-- assertions.f
+|-- coverage.f
+`-- rtl.f
+```
+
+There are two complementary kinds of coverage:
+
+| Coverage | Owner | Result |
+| --- | --- | --- |
+| SystemVerilog assertion, cover, line, branch, and toggle coverage | HDL simulator | Native simulator database and exported reports |
+| Functional coverage sampled by the verification environment | PyUVM test | `functional-coverage.json` |
+
+`PYUVM_COVERAGE=enabled` enables native simulator coverage collection. It does
+not replace Python functional coverage, and Python functional coverage does not
+prove that the bound SVA or HDL cover properties were exercised. Review both
+forms of evidence for release.
+
+Normal SystemVerilog simulation, PyUVM, and formal verification consume the
+same module-owned property, assertion, and coverage sources. Yosys may select a
+procedural equivalent from the same wrapper when it cannot parse a concurrent
+SVA construct. See [Configuration](configuration.md#design-and-path-variables)
+for the wrapper and `MOSAIC_YOSYS_FORMAL` conventions.
+
 ## Select project flows
 
 Create `config/flows.mk`. Begin with every portable gate enabled. Disable a flow
@@ -104,9 +175,11 @@ FLOW_yosys_synthesis := enabled
 FLOW_symbiyosys_formal := enabled
 FLOW_eqy_equivalence := enabled
 FLOW_verilator_sim := enabled
+FLOW_pyuvm_open_source := disabled
 FLOW_openroad := disabled
 
 FLOW_vcs_sim := enabled
+FLOW_pyuvm_commercial := disabled
 FLOW_vc_lint := enabled
 FLOW_vc_cdc := enabled
 FLOW_sg_cdc := disabled

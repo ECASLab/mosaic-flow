@@ -1,0 +1,18 @@
+[options]
+mode cover
+depth 8
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal -D MOSAIC_FORMAL -D MOSAIC_YOSYS_FORMAL -D FORMAL_COVERAGE -sv flow_fixture.sv flow_fixture_coverage.sv flow_fixture_coverage_bind.sv flow_fixture_formal.sv
+prep -top flow_fixture_formal
+
+[files]
+rtl/flow_fixture.sv
+verif/properties/flow_fixture_sequences.svh
+verif/properties/flow_fixture_properties.svh
+verif/coverage/flow_fixture_coverage.sv
+verif/coverage/flow_fixture_coverage_bind.sv
+verif/formal/flow_fixture_formal.sv
