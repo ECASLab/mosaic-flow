@@ -9,6 +9,17 @@ cache_root="${MOSAIC_TOOLS_ROOT:-${XDG_CACHE_HOME:-${HOME}/.cache}/mosaic}"
 oss_dir="${cache_root}/oss-cad-suite/${OSS_CAD_SUITE_VERSION}"
 verible_dir="${cache_root}/verible/${VERIBLE_VERSION}"
 slang_dir="${cache_root}/slang/${SLANG_VERSION}"
+pyuvm_dir="${cache_root}/pyuvm/${PYUVM_VERSION}-cocotb-${COCOTB_VERSION}-env${PYUVM_ENVIRONMENT_VERSION}"
+pyuvm_ready=0
+
+# The environment-version suffix invalidates the immutable virtual environment
+# when packaging or installation policy changes without a dependency update.
+if [[ -x "${pyuvm_dir}/bin/python" ]] &&
+   "${pyuvm_dir}/bin/python" -c \
+     'import cocotb, pyuvm, sys; sys.exit(cocotb.__version__ != sys.argv[1] or pyuvm.__version__ != sys.argv[2])' \
+     "${COCOTB_VERSION}" "${PYUVM_VERSION}"; then
+  pyuvm_ready=1
+fi
 
 required_commands=(
   verible-verilog-lint
@@ -27,6 +38,10 @@ for command_name in "${required_commands[@]}"; do
   fi
 done
 
+if [[ "${pyuvm_ready}" -eq 0 ]]; then
+  missing=1
+fi
+
 if [[ "${missing:-0}" -eq 0 ]]; then
   exit 0
 fi
@@ -37,7 +52,7 @@ if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
   exit 2
 fi
 
-mkdir -p "${cache_root}/downloads" "$(dirname "${oss_dir}")"
+mkdir -p "${cache_root}/downloads" "$(dirname "${oss_dir}")" "$(dirname "${pyuvm_dir}")"
 
 if [[ ! -x "${oss_dir}/bin/yosys" ]]; then
   if [[ -e "${oss_dir}" ]]; then
@@ -74,6 +89,25 @@ fi
 if [[ ! -x "${slang_dir}/bin/slang" ]]; then
   echo "Installing Slang ${SLANG_VERSION}..."
   "${flow_root}/ci/install_slang.sh" "${slang_dir}"
+fi
+
+if [[ "${pyuvm_ready}" -eq 0 ]]; then
+  echo "Installing PyUVM ${PYUVM_VERSION} and cocotb ${COCOTB_VERSION}..."
+  if [[ -e "${pyuvm_dir}" ]]; then
+    echo "Incomplete PyUVM environment: ${pyuvm_dir}" >&2
+    echo "Remove that directory and rerun make setup-open-source." >&2
+    exit 2
+  fi
+  # Build off to the side and rename only after pip succeeds, preventing a
+  # partial environment from being accepted by a later CI run.
+  install_root="$(mktemp -d "$(dirname "${pyuvm_dir}")/.install.XXXXXX")"
+  trap 'rm -rf "${install_root}"' EXIT
+  python3 -m venv "${install_root}/venv"
+  "${install_root}/venv/bin/python" -m pip install --disable-pip-version-check \
+    --requirement "${flow_root}/config/pyuvm-requirements.txt"
+  mv "${install_root}/venv" "${pyuvm_dir}"
+  trap - EXIT
+  rmdir "${install_root}"
 fi
 
 echo "Open-source tools are ready under ${cache_root}"

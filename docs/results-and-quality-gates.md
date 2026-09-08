@@ -66,9 +66,12 @@ the dependency graph and filesystem are temporarily inconsistent.
 - `symbiyosys_formal`
 - `eqy_equivalence`
 - `verilator_sim`
+- `pyuvm_open_source`
 
-`make open-source` runs these targets and then the gate. `openroad` is optional
-and intentionally outside this portable gate.
+`make open-source` runs these targets and then the gate. PyUVM is disabled by
+default and therefore records `SKIP` unless the module enables it. Once enabled,
+its open-source result must be `PASS`. `openroad` is optional and intentionally
+outside this portable gate.
 
 ## Commercial quality gate
 
@@ -133,6 +136,18 @@ make -C tests/fixture-module FLOW_ROOT="$GITHUB_WORKSPACE" clean open-source
 It caches pinned tools and uploads fixture reports even when the flow fails. The
 fixture is deliberately independent of `mosaic-module-template`, so the
 methodology can prove its own consumer contract before release.
+
+The fixture keeps `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and
+`COVERAGE_FILELIST` separate, then uses each list in its normal testbench,
+PyUVM environment, and formal tasks. Assertion and coverage wrappers include
+the same module-specific property library, which composes a separate sequence
+library. The integration test therefore
+qualifies each verification source across simulation and formal instead of
+maintaining flow-specific copies. The formal cover task must reach all fixture
+cover statements. Both simulation paths export native coverage,
+while PyUVM also writes separate Python functional coverage. A second negative
+run injects a SystemVerilog assertion failure and requires the PyUVM adapter to
+retain `FAIL`.
 
 ## Release evidence
 

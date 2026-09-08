@@ -39,10 +39,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/mosaic
-          key: mosaic-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('config/tool-versions.env') }}
+          key: mosaic-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('config/tool-versions.env', 'config/pyuvm-requirements.txt') }}
 
       - name: Run complete fixture flow
         run: make -C tests/fixture-module FLOW_ROOT="${GITHUB_WORKSPACE}" clean open-source
+
+      - name: Validate shared verification reuse
+        run: tests/check_fixture_verification_reuse.sh
+
+      - name: Validate PyUVM fixture evidence
+        run: tests/check_fixture_pyuvm_evidence.sh
+
+      - name: Verify SystemVerilog assertion failure propagation
+        run: tests/test_pyuvm_assertion_failure.sh
 
       - name: Upload fixture reports
         if: always()

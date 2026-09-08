@@ -33,6 +33,7 @@ maintainers, and contributors to the methodology itself.
 | Run all licensed local checks | `make synopsys-all` |
 | Select or disable flows | Module `config/flows.mk` |
 | Set design paths and names | Module `config/design.mk` |
+| Understand PyUVM and SVA reuse | [PyUVM, SVA, and coverage](getting-started.md#understand-pyuvm-sva-and-coverage) |
 | Inspect machine-readable status | Module `reports/<flow-id>/status.txt` |
 | Add a methodology flow | [Methodology development](development.md#adding-a-flow) |
 

@@ -5,7 +5,7 @@ flow_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=flow_selection.sh
 source "${flow_root}/ci/flow_selection.sh"
 
-required_flows=(verible_lint verible_format slang_elaboration verilator_lint yosys_synthesis symbiyosys_formal eqy_equivalence verilator_sim)
+required_flows=(verible_lint verible_format slang_elaboration verilator_lint yosys_synthesis symbiyosys_formal eqy_equivalence verilator_sim pyuvm_open_source)
 failed=0
 
 for flow_name in "${required_flows[@]}"; do

@@ -101,7 +101,7 @@ if [[ -e "${report_root}/eqy_equivalence/block_reason.txt" ]]; then
   exit 1
 fi
 
-required_flows=(verible_lint verible_format slang_elaboration verilator_lint yosys_synthesis symbiyosys_formal eqy_equivalence verilator_sim)
+required_flows=(verible_lint verible_format slang_elaboration verilator_lint yosys_synthesis symbiyosys_formal eqy_equivalence verilator_sim pyuvm_open_source)
 for flow_name in "${required_flows[@]}"; do
   mkdir -p "${report_root}/${flow_name}"
   printf 'PASS\n' > "${report_root}/${flow_name}/status.txt"
