@@ -22,8 +22,10 @@ shared methodology paths.
 | `symbiyosys_formal` | `open-formal` | SymbiYosys | Open-source | None |
 | `eqy_equivalence` | `open-equivalence` | EQY | Open-source | `yosys_synthesis` |
 | `verilator_sim` | `open-sim` | Verilator | Open-source | None |
+| `pyuvm_open_source` | `open-pyuvm` | PyUVM, cocotb, Verilator or Icarus | Open-source | None |
 | `openroad` | `open-physical` | OpenROAD Flow Scripts | Optional | None |
 | `vcs_sim` | `synopsys-sim` | VCS | Commercial | None |
+| `pyuvm_commercial` | `commercial-pyuvm` | PyUVM, cocotb, VCS or Xcelium | Commercial | None |
 | `vc_lint` | `synopsys-lint` | VC SpyGlass | Commercial | None |
 | `vc_cdc` | `synopsys-cdc CDC_TOOL=vc` | VC SpyGlass | Commercial | None |
 | `sg_cdc` | `synopsys-cdc CDC_TOOL=sg` | SpyGlass | Commercial | None |
@@ -128,13 +130,19 @@ More information: [Yosys documentation](https://yosyshq.readthedocs.io/projects/
 - **ID:** `symbiyosys_formal`
 - **Target:** `make open-formal`
 - **Adapter:** [`flows/symbiyosys/run.sh`](../flows/symbiyosys/run.sh)
-- **Inputs:** `FORMAL_CONFIG` and all sources referenced by the module's `.sby` file
-- **Reports:** `reports/symbiyosys_formal/formal.log`, `status.txt`
-- **Work products:** complete SymbiYosys database below `work/symbiyosys_formal/`
+- **Inputs:** `FORMAL_CONFIG`, `FORMAL_COVER_CONFIG`, and the sources from
+  `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and `COVERAGE_FILELIST`
+- **Reports:** `reports/symbiyosys_formal/formal.log`, `coverage.log`,
+  `status.txt`
+- **Work products:** proof database below `work/symbiyosys_formal/` and cover
+  database below `work/symbiyosys_coverage/`
 
 The module owns proof modes, engines, depth, formal harness, assumptions,
-assertions, and cover statements. The adapter succeeds only when SymbiYosys
-returns successfully and its work directory contains `PASS`.
+properties, assertions, and cover statements. Property, assertion, and coverage
+sources must be the same files selected by their shared filelists for
+simulation. When
+`COVERAGE_FILELIST` is nonempty, the adapter requires `FORMAL_COVER_CONFIG` and
+runs a cover reachability task after the proof. Both tasks must produce `PASS`.
 
 More information: [SymbiYosys documentation](https://yosyshq.readthedocs.io/projects/sby/en/stable/).
 
@@ -160,20 +168,63 @@ More information: [EQY documentation](https://yosyshq.readthedocs.io/projects/eq
 - **ID:** `verilator_sim`
 - **Target:** `make open-sim`
 - **Adapter:** [`flows/sim/run.sh`](../flows/sim/run.sh)
-- **Inputs:** `TB_FILELIST`, `TB_TOP`
-- **Reports:** `reports/verilator_sim/compile.log`, `run.log`, `status.txt`
+- **Inputs:** `TB_FILELIST`, `PROPERTY_FILELIST`, `ASSERTION_FILELIST`,
+  `COVERAGE_FILELIST`, `TB_TOP`
+- **Reports:** `reports/verilator_sim/compile.log`, `run.log`, `coverage.dat`,
+  `coverage.info`, `status.txt`
 - **Work products:** generated model and executable below `work/verilator_sim/obj_dir/`
 
-The adapter compiles a standalone executable with timing support and assertions
-enabled through `--timing --assert`. It then executes the testbench binary. A
-compile error, assertion failure that terminates simulation, testbench failure,
-or nonzero simulation exit fails the flow.
+The adapter compiles a standalone executable with timing support, adds the
+shared property, assertion, and coverage filelists, and enables assertions through
+`--timing --assert`. When `SIM_COVERAGE` is enabled, it collects simulator
+coverage and exports an LCOV-compatible report. A compile error, assertion
+failure that terminates simulation, testbench failure, or nonzero simulation
+exit fails the flow.
 
 Assertions only provide release evidence when the testbench reaches the relevant
 conditions. Module verification must also define meaningful stimulus, checking,
 and coverage goals.
 
 More information: [Verilator User's Guide](https://verilator.org/guide/latest/).
+
+### PyUVM open-source verification
+
+- **ID:** `pyuvm_open_source`
+- **Target:** `make open-pyuvm`
+- **Adapter:** [`flows/pyuvm/run.sh`](../flows/pyuvm/run.sh)
+- **Default simulator:** Verilator
+- **Inputs:** `PYUVM_TEST_MODULE`, `PYUVM_FILELIST`, `PYUVM_TOP`,
+  `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and `COVERAGE_FILELIST`
+- **Reports:** compile and simulation logs, JUnit XML, simulator coverage,
+  separate functional coverage, and `status.txt` below
+  `reports/pyuvm_open_source/`
+- **Work products:** simulator database below
+  `work/pyuvm_open_source/<simulator>/`
+
+This opt-in flow runs module-owned PyUVM tests through cocotb. Enabling it adds
+`open-pyuvm` to the normal `open-source` aggregate and makes its exact result
+part of the open-source quality gate. A disabled module records `SKIP`.
+
+PyUVM does not call SVA from Python. The adapter parses the property, assertion,
+and coverage filelists and supplies those HDL sources to the cocotb simulator
+runner. Bind modules attach the assertion and coverage wrappers to the DUT at
+compile time. The PyUVM test then drives the DUT while the simulator evaluates
+the SVA concurrently. See the [new-user execution model](getting-started.md#understand-pyuvm-sva-and-coverage)
+for the complete relationship and recommended source layout.
+
+Verilator compiles the shared property, assertion, and coverage models with
+`--assert`. These are the same sources used by normal simulation and formal.
+When coverage is enabled, the adapter also compiles with `--coverage` and exports
+`coverage.dat` plus LCOV-compatible `coverage.info`. Python functional coverage
+belongs in the separate path supplied by `PYUVM_FUNCTIONAL_COVERAGE_FILE` and
+does not replace SystemVerilog line, branch, toggle, or assertion coverage.
+
+Icarus is available as an alternate open-source cocotb backend, but each module
+must qualify its SystemVerilog and assertion constructs against that simulator.
+Verilator remains the portable default.
+
+More information: [PyUVM](https://github.com/pyuvm/pyuvm) and
+[cocotb simulator support](https://docs.cocotb.org/en/stable/simulator_support.html).
 
 ### OpenROAD physical implementation
 
@@ -210,15 +261,40 @@ licenses, PDK data, constraints, adapter semantics, or signoff policy.
 - **ID:** `vcs_sim`
 - **Target:** `make synopsys-sim`
 - **Adapter:** [`flows/sim/run.sh`](../flows/sim/run.sh)
-- **Inputs:** `TB_FILELIST`, `TB_TOP`, optional simulator flags from the environment
+- **Inputs:** `TB_FILELIST`, `PROPERTY_FILELIST`, `ASSERTION_FILELIST`,
+  `COVERAGE_FILELIST`, `TB_TOP`, optional simulator flags from the environment
 - **Reports:** `reports/vcs_sim/compile.log`, `run.log`, `status.txt`
 - **Work products:** `work/vcs_sim/simv` and simulator-generated data
 
-VCS compiles and runs the same module-owned testbench file list used by the
-portable simulation. The testbench or local VCS setup must write SAIF at
-`ACTIVITY_FILE` when PrimePower is enabled.
+VCS compiles and runs the same module-owned testbench, property, assertion, and
+coverage filelists used by the portable simulation. With `SIM_COVERAGE` enabled it
+retains native line, condition, toggle, and assertion coverage. The testbench
+or local VCS setup must write SAIF at `ACTIVITY_FILE` when PrimePower is
+enabled.
 
 More information: [Synopsys VCS](https://www.synopsys.com/verification/simulation/vcs.html).
+
+### PyUVM commercial verification
+
+- **ID:** `pyuvm_commercial`
+- **Target:** `make commercial-pyuvm`
+- **Adapter:** [`flows/pyuvm/run.sh`](../flows/pyuvm/run.sh)
+- **Supported simulators:** VCS and Xcelium
+- **Inputs:** the same module-owned PyUVM test and HDL filelists used by the
+  open-source flow
+- **Reports:** simulator, JUnit, assertion, and coverage evidence below
+  `reports/pyuvm_commercial/`
+- **Work products:** VCS `coverage.vdb` or Xcelium `cov_work` below
+  `work/pyuvm_commercial/<simulator>/`
+
+Select the simulator with `PYUVM_COMMERCIAL_SIMULATOR=vcs` or
+`PYUVM_COMMERCIAL_SIMULATOR=xcelium`. The executable and licensed environment
+must be available through the site `PATH`. The adapter enables native
+SystemVerilog assertion and coverage options, while module-specific compile,
+run, and plusargs can be appended through the documented PyUVM variables.
+
+This flow is independent from `synopsys-all` because Xcelium is also supported.
+It is never run by the public GitHub-hosted methodology workflow.
 
 ### VC Lint
 

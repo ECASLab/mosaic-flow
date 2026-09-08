@@ -6,9 +6,13 @@ depth 8
 smtbmc bitwuzla
 
 [script]
-read -formal -sv flow_fixture.sv flow_fixture_formal.sv
+read -formal -D MOSAIC_FORMAL -D MOSAIC_YOSYS_FORMAL -D FORMAL_ASSERTIONS -sv flow_fixture.sv flow_fixture_sva.sv flow_fixture_bind.sv flow_fixture_formal.sv
 prep -top flow_fixture_formal
 
 [files]
 rtl/flow_fixture.sv
+verif/properties/flow_fixture_sequences.svh
+verif/properties/flow_fixture_properties.svh
+verif/assertions/flow_fixture_sva.sv
+verif/assertions/flow_fixture_bind.sv
 verif/formal/flow_fixture_formal.sv

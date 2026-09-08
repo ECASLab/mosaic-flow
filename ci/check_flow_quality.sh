@@ -27,6 +27,11 @@ required_version_keys=(
   OSS_CAD_SUITE_SHA256
   VERIBLE_VERSION
   SLANG_VERSION
+  PYUVM_VERSION
+  COCOTB_VERSION
+  PYUVM_ENVIRONMENT_VERSION
+  FIND_LIBPYTHON_VERSION
+  PYTEST_VERSION
   SHELLCHECK_VERSION
   SHELLCHECK_SHA256
   ACTIONLINT_VERSION
@@ -36,6 +41,17 @@ source config/tool-versions.env
 for version_key in "${required_version_keys[@]}"; do
   if [[ -z "${!version_key:-}" ]]; then
     echo "Missing tool version field: ${version_key}" >&2
+    exit 1
+  fi
+done
+
+for requirement in \
+  "pyuvm==${PYUVM_VERSION}" \
+  "cocotb==${COCOTB_VERSION}" \
+  "find_libpython==${FIND_LIBPYTHON_VERSION}" \
+  "pytest==${PYTEST_VERSION}"; do
+  if ! grep -Fxq "${requirement}" config/pyuvm-requirements.txt; then
+    echo "PyUVM requirement does not match pinned version: ${requirement}" >&2
     exit 1
   fi
 done

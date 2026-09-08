@@ -27,7 +27,7 @@ and retain ownership of all design intent.
 Each consuming module repository owns design intent:
 
 - Synthesizable RTL and public packages
-- Testbench sources, assertions, formal harnesses, and reference models
+- Testbench sources, properties, assertions, coverage, formal harnesses, and reference models
 - Ordered RTL and verification file lists
 - Top-level names and module-specific paths
 - Timing, CDC, DFT, and low-power constraints
@@ -46,6 +46,7 @@ mosaic-flow/
 |-- ci/                      Orchestration, validation, installers, and gates
 |-- config/
 |   |-- flows.mk             Canonical flow registry and shared defaults
+|   |-- pyuvm-requirements.txt Pinned Python verification environment
 |   |-- tool-versions.env    Pinned downloadable tool versions and checksums
 |   `-- tools.mk             Executable names, cache roots, and PATH setup
 |-- docs/                    User and maintainer documentation
@@ -66,7 +67,8 @@ A typical consumer mirrors flow names for module-owned inputs:
 ```text
 my-module/
 |-- rtl/                     Synthesizable design
-|-- verif/                   Testbench, assertions, and formal harness
+|-- verif/                   Testbench, properties, assertions, coverage, and formal harness
+|   `-- pyuvm/               Module-owned PyUVM tests and components
 |-- filelists/               Ordered source lists
 |-- config/
 |   |-- design.mk            Module identity and input paths

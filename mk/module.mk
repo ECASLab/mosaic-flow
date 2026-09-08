@@ -18,8 +18,8 @@ export $(foreach flow,$(MOSAIC_FLOW_IDS),FLOW_$(flow) FLOW_DEPENDENCIES_$(flow))
 
 FLOW_RUNNER := $(FLOW_ROOT)/ci/run_flow.sh
 
-OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-quality-gate
-OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim
+OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-quality-gate
+OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm
 
 FLOW_TARGET_verible_lint := open-style-lint
 FLOW_TARGET_verible_format := open-format-check
@@ -29,8 +29,10 @@ FLOW_TARGET_yosys_synthesis := open-synth
 FLOW_TARGET_symbiyosys_formal := open-formal
 FLOW_TARGET_eqy_equivalence := open-equivalence
 FLOW_TARGET_verilator_sim := open-sim
+FLOW_TARGET_pyuvm_open_source := open-pyuvm
 FLOW_TARGET_openroad := open-physical
 FLOW_TARGET_vcs_sim := synopsys-sim
+FLOW_TARGET_pyuvm_commercial := commercial-pyuvm
 FLOW_TARGET_vc_lint := synopsys-lint
 FLOW_TARGET_vc_cdc := $(if $(filter vc,$(CDC_TOOL)),synopsys-cdc)
 FLOW_TARGET_sg_cdc := $(if $(filter sg,$(CDC_TOOL)),synopsys-cdc)
@@ -47,7 +49,7 @@ $(FLOW_TARGET_$(1)): $(foreach dependency,$(FLOW_DEPENDENCIES_$(1)),$(FLOW_TARGE
 endef
 $(foreach flow,$(MOSAIC_FLOW_IDS),$(eval $(call mosaic_add_flow_dependencies,$(flow))))
 
-.PHONY: help flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+.PHONY: help flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
 	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk"
@@ -102,6 +104,10 @@ open-equivalence:
 open-sim:
 	@SIMULATOR=verilator "$(FLOW_RUNNER)" verilator_sim "$(FLOW_ROOT)/flows/sim/run.sh"
 
+## open-pyuvm   Run an enabled PyUVM test with the selected open-source simulator
+open-pyuvm:
+	@PYUVM_SIMULATOR="$(PYUVM_OPEN_SIMULATOR)" "$(FLOW_RUNNER)" pyuvm_open_source "$(FLOW_ROOT)/flows/pyuvm/run.sh" pyuvm_open_source
+
 ## open-quality-gate Validate all open-source results
 open-quality-gate: $(OPEN_FLOW_TARGETS)
 	@"$(FLOW_ROOT)/ci/open_source_quality_gate.sh"
@@ -117,6 +123,10 @@ synopsys-check-env:
 ## synopsys-sim Compile and simulate locally with VCS
 synopsys-sim:
 	@SIMULATOR=vcs "$(FLOW_RUNNER)" vcs_sim "$(FLOW_ROOT)/flows/sim/run.sh"
+
+## commercial-pyuvm Run an enabled PyUVM test with VCS or Xcelium
+commercial-pyuvm: | setup-open-source
+	@PYUVM_SIMULATOR="$(PYUVM_COMMERCIAL_SIMULATOR)" "$(FLOW_RUNNER)" pyuvm_commercial "$(FLOW_ROOT)/flows/pyuvm/run.sh" pyuvm_commercial
 
 ## synopsys-lint Run VC Lint locally
 synopsys-lint:
