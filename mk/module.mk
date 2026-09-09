@@ -5,6 +5,53 @@ include $(FLOW_ROOT)/config/flows.mk
 MODULE_FLOW_CONFIG ?= $(MODULE_ROOT)/config/flows.mk
 -include $(MODULE_FLOW_CONFIG)
 
+PARAMETER_PROFILE_TOOL ?= $(FLOW_ROOT)/ci/parameter_profiles.py
+PARAMETER_PROFILE_MANIFEST ?= $(if $(MODULE),$(MODULE_ROOT)/config/parameter-profiles/$(MODULE).json,$(MODULE_ROOT)/config/parameter-profiles.json)
+export PARAMETER_PROFILE_TOOL
+MOSAIC_PARAMETER_PROFILES := $(if $(wildcard $(PARAMETER_PROFILE_MANIFEST)),enabled,disabled)
+PROFILE_JOBS ?= $(if $(JOBS),$(JOBS),0)
+PROFILE_TARGET ?= open-source
+export PROFILE_PARAMETERS_JSON := {}
+export PROFILE_APPLICABLE_FLOWS :=
+export MOSAIC_PROFILE_ACTIVE := disabled
+
+ifeq ($(MOSAIC_PARAMETER_PROFILES),enabled)
+ifneq ($(strip $(PROFILE)),)
+MOSAIC_PROFILE_VALIDATION_ERROR := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" validate --quiet --manifest "$(PARAMETER_PROFILE_MANIFEST)" 2>&1 && python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field flows >/dev/null 2>&1 || echo "Invalid or unknown PROFILE '$(PROFILE)'; run make profile-manifest-check")
+ifneq ($(strip $(MOSAIC_PROFILE_VALIDATION_ERROR)),)
+$(error $(MOSAIC_PROFILE_VALIDATION_ERROR))
+endif
+
+export PROFILE_PARAMETERS_JSON := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field parameters)
+export PROFILE_APPLICABLE_FLOWS := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field flows)
+MOSAIC_PROFILE_DESIGN_TOP := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field design)
+MOSAIC_PROFILE_TESTBENCH_TOP := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field testbench)
+MOSAIC_PROFILE_FORMAL_TOP := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field formal)
+MOSAIC_PROFILE_PYUVM_TOP := $(shell python3 "$(PARAMETER_PROFILE_TOOL)" get --manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" --field pyuvm)
+
+ifneq ($(strip $(MOSAIC_PROFILE_DESIGN_TOP)),)
+override DESIGN_TOP := $(MOSAIC_PROFILE_DESIGN_TOP)
+endif
+ifneq ($(strip $(MOSAIC_PROFILE_TESTBENCH_TOP)),)
+override TB_TOP := $(MOSAIC_PROFILE_TESTBENCH_TOP)
+endif
+ifneq ($(strip $(MOSAIC_PROFILE_FORMAL_TOP)),)
+override FORMAL_TOP := $(MOSAIC_PROFILE_FORMAL_TOP)
+endif
+ifneq ($(strip $(MOSAIC_PROFILE_PYUVM_TOP)),)
+override PYUVM_TOP := $(MOSAIC_PROFILE_PYUVM_TOP)
+endif
+export DESIGN_TOP TB_TOP FORMAL_TOP PYUVM_TOP
+
+PROFILE_REPORT_ROOT := $(REPORT_DIR)
+PROFILE_WORK_ROOT := $(WORK_DIR)
+override REPORT_DIR := $(PROFILE_REPORT_ROOT)/$(PROFILE)
+override WORK_DIR := $(PROFILE_WORK_ROOT)/$(PROFILE)
+export REPORT_DIR WORK_DIR
+export MOSAIC_PROFILE_ACTIVE := enabled
+endif
+endif
+
 mosaic_flow_state_is_valid = $(and $(filter 1,$(words $(1))),$(filter $(1),enabled disabled))
 MOSAIC_INVALID_FLOW_STATES := $(strip $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(call mosaic_flow_state_is_valid,$(FLOW_$(flow))),,$(flow)=$(FLOW_$(flow)))))
 ifneq ($(MOSAIC_INVALID_FLOW_STATES),)
@@ -12,7 +59,13 @@ $(error Flow states must be 'enabled' or 'disabled': $(MOSAIC_INVALID_FLOW_STATE
 endif
 
 MOSAIC_EXPLICIT_DISABLED_FLOWS := $(DISABLED_FLOWS)
-override DISABLED_FLOWS := $(sort $(MOSAIC_EXPLICIT_DISABLED_FLOWS) $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter disabled,$(FLOW_$(flow))),$(flow))))
+MOSAIC_MODULE_DISABLED_FLOWS := $(sort $(filter $(MOSAIC_FLOW_IDS),$(MOSAIC_EXPLICIT_DISABLED_FLOWS)) $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(filter disabled,$(FLOW_$(flow))),$(flow))))
+MOSAIC_PROFILE_POLICY_CONFLICTS := $(filter $(MOSAIC_MODULE_DISABLED_FLOWS),$(PROFILE_APPLICABLE_FLOWS))
+ifneq ($(MOSAIC_PROFILE_POLICY_CONFLICTS),)
+$(error PROFILE '$(PROFILE)' requires flows disabled by module policy: $(MOSAIC_PROFILE_POLICY_CONFLICTS))
+endif
+MOSAIC_PROFILE_DISABLED_FLOWS := $(if $(PROFILE_APPLICABLE_FLOWS),$(filter-out $(PROFILE_APPLICABLE_FLOWS),$(MOSAIC_FLOW_IDS)))
+override DISABLED_FLOWS := $(sort $(MOSAIC_EXPLICIT_DISABLED_FLOWS) $(MOSAIC_MODULE_DISABLED_FLOWS) $(MOSAIC_PROFILE_DISABLED_FLOWS))
 export DISABLED_FLOWS
 export MOSAIC_FLOW_IDS
 export $(foreach flow,$(MOSAIC_FLOW_IDS),FLOW_$(flow) FLOW_DEPENDENCIES_$(flow))
@@ -50,7 +103,7 @@ $(FLOW_TARGET_$(1)): $(foreach dependency,$(FLOW_DEPENDENCIES_$(1)),$(FLOW_TARGE
 endef
 $(foreach flow,$(MOSAIC_FLOW_IDS),$(eval $(call mosaic_add_flow_dependencies,$(flow))))
 
-.PHONY: help mosaic-module-selection-check flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+.PHONY: help mosaic-module-selection-check mosaic-profile-selection-check profile-manifest-check profile-list profile-matrix profile-evidence flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
 	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk" "$(FLOW_ROOT)/mk/project.mk"
@@ -61,8 +114,84 @@ mosaic-module-selection-check:
 		exit 2; \
 	fi
 
+profile-manifest-check:
+	@if [[ "$(MOSAIC_PARAMETER_PROFILES)" == "enabled" ]]; then \
+		python3 "$(PARAMETER_PROFILE_TOOL)" validate \
+			--manifest "$(PARAMETER_PROFILE_MANIFEST)"; \
+	else \
+		echo "No parameter-profile manifest; the unqualified default configuration is active"; \
+	fi
+
+profile-list:
+	@if [[ "$(MOSAIC_PARAMETER_PROFILES)" == "enabled" ]]; then \
+		python3 "$(PARAMETER_PROFILE_TOOL)" list \
+			--manifest "$(PARAMETER_PROFILE_MANIFEST)"; \
+	else \
+		printf 'default\n'; \
+	fi
+
+profile-matrix:
+	@if [[ "$(MOSAIC_PARAMETER_PROFILES)" == "enabled" ]]; then \
+		python3 "$(PARAMETER_PROFILE_TOOL)" matrix \
+			--manifest "$(PARAMETER_PROFILE_MANIFEST)" \
+			--module "$(if $(MODULE),$(MODULE),$(DESIGN_TOP))"; \
+	else \
+		printf '{"include":[{"job_name":"%s--default","module":"%s","parameters":{},"profile":"default"}]}\n' \
+			"$(if $(MODULE),$(MODULE),$(DESIGN_TOP))" \
+			"$(if $(MODULE),$(MODULE),$(DESIGN_TOP))"; \
+	fi
+
+mosaic-profile-selection-check:
+	@if [[ "$(MOSAIC_PARAMETER_PROFILES)" == "enabled" && -z "$(PROFILE)" ]]; then \
+		echo "This module declares parameter profiles; select PROFILE=<name> or use all-profiles" >&2; \
+		exit 2; \
+	fi; \
+	if [[ "$(MOSAIC_PARAMETER_PROFILES)" == "disabled" && -n "$(PROFILE)" && "$(PROFILE)" != "default" ]]; then \
+		echo "PROFILE=$(PROFILE) requires a parameter-profile manifest" >&2; \
+		exit 2; \
+	fi
+
+profile-evidence: mosaic-profile-selection-check
+	@if [[ "$(MOSAIC_PROFILE_ACTIVE)" == "enabled" ]]; then \
+		python3 "$(PARAMETER_PROFILE_TOOL)" evidence \
+			--manifest "$(PARAMETER_PROFILE_MANIFEST)" --selected "$(PROFILE)" \
+			--output "$(REPORT_DIR)/parameter-profile.json" \
+			--design-top "$(DESIGN_TOP)" --testbench-top "$(TB_TOP)" \
+			--formal-top "$(FORMAL_TOP)" --pyuvm-top "$(PYUVM_TOP)"; \
+	fi
+
+ifeq ($(MOSAIC_PARAMETER_PROFILES),enabled)
+.PHONY: all-profiles
+
+## all-profiles Run PROFILE_TARGET for every declared parameter profile
+all-profiles: profile-manifest-check
+	+@if [[ ! "$(PROFILE_JOBS)" =~ ^[0-9]+$$ ]]; then \
+		echo "PROFILE_JOBS must be a nonnegative integer" >&2; \
+		exit 2; \
+	fi; \
+	if [[ ! "$(PROFILE_TARGET)" =~ ^[A-Za-z0-9_.-]+$$ || "$(PROFILE_TARGET)" == "all-profiles" ]]; then \
+		echo "PROFILE_TARGET must name one non-recursive Make target" >&2; \
+		exit 2; \
+	fi; \
+	set +e; \
+	python3 "$(PARAMETER_PROFILE_TOOL)" list --manifest "$(PARAMETER_PROFILE_MANIFEST)" | \
+		xargs --no-run-if-empty --max-procs="$(PROFILE_JOBS)" --replace={} \
+		$(MAKE) --no-print-directory -f "$(abspath $(firstword $(MAKEFILE_LIST)))" PROFILE={} "$(PROFILE_TARGET)"; \
+	aggregate_status=$$?; \
+	python3 "$(PARAMETER_PROFILE_TOOL)" summary \
+		--manifest "$(PARAMETER_PROFILE_MANIFEST)" --report-root "$(REPORT_DIR)" \
+		--output "$(REPORT_DIR)/parameter-profile-summary.json"; \
+	summary_status=$$?; \
+	if [[ "$${summary_status}" -ne 0 ]]; then exit "$${summary_status}"; fi; \
+	exit "$${aggregate_status}"
+
+ifneq ($(filter $(PROFILE_TARGET),$(OPEN_SOURCE_TARGETS)),)
+all-profiles: setup-open-source
+endif
+endif
+
 ## flow-config-check Validate and display the project flow selection
-flow-config-check: mosaic-module-selection-check
+flow-config-check: mosaic-module-selection-check profile-evidence
 	@"$(FLOW_ROOT)/ci/check_flow_config.sh"
 
 ## setup-open-source Install missing pinned open-source tools in the user cache

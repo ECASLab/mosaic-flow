@@ -14,6 +14,18 @@ work/<canonical-flow-id>/
 logs, and compact summaries. Work directories contain generated executables,
 netlists, proof databases, and tool state.
 
+Named parameter profiles add a namespace before the flow ID:
+
+```text
+reports/<profile>/<flow-id>/
+work/<profile>/<flow-id>/
+```
+
+Multi-module repositories use `<module>/<profile>/<flow-id>`. Every selected
+profile records `parameter-profile.json`, while `all-profiles` records the
+cross-profile `parameter-profile-summary.json` at the unqualified report root.
+See [Parameter-profile qualification](parameter-profiles.md).
+
 `make clean` removes the complete work tree and every item below `reports/`
 except `.gitkeep`. It is idempotent and succeeds when either generated root does
 not exist, including on a fresh module checkout.
@@ -132,6 +144,7 @@ The fixture integration job runs:
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$GITHUB_WORKSPACE" clean open-source
 make -C tests/fixture-multi-module FLOW_ROOT="$GITHUB_WORKSPACE" clean all-modules MODULE_JOBS=2
+make -C tests/fixture-parameter-profiles FLOW_ROOT="$GITHUB_WORKSPACE" clean all-profiles PROFILE_JOBS=4
 ```
 
 It caches pinned tools and uploads fixture reports even when the flow fails. The
@@ -141,6 +154,12 @@ methodology can prove its own consumer contract before release.
 The multi-module fixture independently qualifies named and fallback input
 resolution, module-specific policy loading, formatter options, isolated work
 and reports, aggregate failure propagation, and deterministic CI matrix output.
+
+The parameter-profile fixture qualifies a minimum width, nominal width, feature
+toggle, and elaboration-only profile. It checks profile-local synthesis,
+formal, simulation, PyUVM, and EQY evidence, plus explicit `SKIP` results for
+flows outside the elaboration-only policy. Its negative tests require aggregate
+failure for failed, blocked, and missing profile evidence.
 
 The fixture keeps `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and
 `COVERAGE_FILELIST` separate, then uses each list in its normal testbench,

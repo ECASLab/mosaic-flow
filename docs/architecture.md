@@ -58,6 +58,7 @@ mosaic-flow/
 |-- tests/
 |   |-- fixture-module/      Minimal independent consumer used by CI
 |   |-- fixture-multi-module/ Multi-module selection and concurrency fixture
+|   |-- fixture-parameter-profiles/ Parameter elaboration matrix fixture
 |   `-- test_quality_gate.sh Configuration and quality-gate unit tests
 |-- README.md                Repository overview
 `-- VERSION                  Methodology semantic version

@@ -10,6 +10,13 @@ module repository.
 All target paths below are relative to the module root unless identified as
 shared methodology paths.
 
+When `PROFILE=<name>` is selected, supported adapters elaborate the canonical
+parameter map and place all paths below that profile's report and work roots.
+Verible remains a source-only check. Formal and EQY adapters render temporary
+profile-specific configuration files without modifying module-owned inputs.
+See [Parameter-profile qualification](parameter-profiles.md) for the complete
+backend mapping.
+
 ## Summary
 
 | Canonical ID | Make target | Tool | Gate | Default dependencies |

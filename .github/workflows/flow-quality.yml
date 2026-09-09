@@ -58,6 +58,14 @@ jobs:
           make -C tests/fixture-multi-module \
             FLOW_ROOT="${GITHUB_WORKSPACE}" clean all-modules MODULE_JOBS=2
 
+      - name: Run complete parameter-profile fixture flow
+        run: |
+          make -C tests/fixture-parameter-profiles \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" clean all-profiles PROFILE_JOBS=4
+
+      - name: Validate parameter-profile fixture evidence
+        run: tests/check_fixture_parameter_profile_evidence.sh
+
       - name: Upload fixture reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,6 +74,7 @@ jobs:
           path: |
             tests/fixture-module/reports/
             tests/fixture-multi-module/reports/
+            tests/fixture-parameter-profiles/reports/
           if-no-files-found: error
 
   multi-module-container:
@@ -85,4 +94,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run multi-module orchestration tests
-        run: tests/test_multi_module.sh
+        run: |
+          tests/test_multi_module.sh
+          tests/test_parameter_profiles.sh

@@ -16,6 +16,11 @@ Multi-module repositories replace the two module configuration rows with
 `config/modules/<module>-flows.mk`. The complete contract is documented in
 [Multi-module projects](multi-module-projects.md).
 
+A parameterized module may add `config/parameter-profiles.json`. Multi-module
+repositories use `config/parameter-profiles/<module>.json`. See
+[Parameter-profile qualification](parameter-profiles.md) for the schema and
+execution contract.
+
 ## Precedence and override rules
 
 Shared flow defaults use `?=`. The module's `config/flows.mk` is included after
@@ -168,6 +173,16 @@ The shared environment adapter requires these variables for every tool adapter:
 | `CONSTRAINT_DIR` | Directory containing synthesis `timing.sdc` |
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
+| `PARAMETER_PROFILE_MANIFEST` | Optional module-owned profile manifest path |
+| `PROFILE` | Selected named profile for one invocation |
+| `PROFILE_TARGET` | Target dispatched by `all-profiles`, default `open-source` |
+| `PROFILE_JOBS` | Maximum concurrent profile jobs, default `JOBS` or `0` |
+
+When `PROFILE` is selected, the flow exports `PROFILE_PARAMETERS_JSON`,
+`PROFILE_APPLICABLE_FLOWS`, and `MOSAIC_PROFILE_ACTIVE` to adapters. These are
+methodology implementation variables and should not be assigned by consumers.
+The selected name is appended to `REPORT_DIR` and `WORK_DIR` after module
+selection.
 
 When `mk/project.mk` selects a manifest entry, `REPORT_DIR` and `WORK_DIR`
 default to `reports/<module>` and `work/<module>`.

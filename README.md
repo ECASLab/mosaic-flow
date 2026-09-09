@@ -16,6 +16,7 @@ methodology without copying flow scripts or changing module RTL.
 - Open-source and Synopsys tool adapters
 - Optional PyUVM verification with open-source, VCS, and Xcelium backends
 - Single-module and manifest-based multi-module project orchestration
+- Named parameter-profile qualification across elaboration and implementation
 - Flow selection, statuses, reports, and quality gates
 - Pinned open-source tool installers and versions
 - Methodology CI and its independent fixture module
@@ -66,7 +67,9 @@ include $(FLOW_ROOT)/mk/project.mk
 
 See [Getting started](docs/getting-started.md) for the complete module contract
 and [Multi-module projects](docs/multi-module-projects.md) for registry,
-selection, concurrent execution, and CI matrix guidance.
+selection, concurrent execution, and CI matrix guidance. Parameterizable RTL
+can use [Parameter profiles](docs/parameter-profiles.md) to qualify independent
+elaborations without duplicating flow scripts.
 
 ## Methodology validation
 
@@ -78,6 +81,7 @@ ci/install_ci_tools.sh "$HOME/.local"
 PATH="$HOME/.local/bin:$PATH" ci/check_flow_quality.sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
 make -C tests/fixture-multi-module FLOW_ROOT="$PWD" clean all-modules MODULE_JOBS=2
+make -C tests/fixture-parameter-profiles FLOW_ROOT="$PWD" clean all-profiles PROFILE_JOBS=4
 ```
 
 GitHub Actions runs the same validation on pushes and pull requests. Commercial

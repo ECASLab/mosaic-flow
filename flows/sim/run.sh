@@ -47,6 +47,14 @@ fi
 
 case "${SIMULATOR}" in
   vcs)
+    parameter_args=()
+    if [[ "${MOSAIC_PROFILE_ACTIVE:-disabled}" == "enabled" ]]; then
+      mapfile -t parameter_args < <(
+        python3 "${PARAMETER_PROFILE_TOOL}" arguments \
+          --parameters "${PROFILE_PARAMETERS_JSON}" --backend vcs \
+          --top "${TB_TOP}"
+      )
+    fi
     vcs_compile_coverage_args=()
     vcs_run_coverage_args=()
     if [[ "${coverage_enabled}" -eq 1 ]]; then
@@ -63,12 +71,21 @@ case "${SIMULATOR}" in
     "${SIM_BIN:-vcs}" -full64 -sverilog -f "${TB_FILELIST}" \
       "${property_args[@]}" "${assertion_args[@]}" \
       "${coverage_filelist_args[@]}" \
-      "${vcs_compile_coverage_args[@]}" -top "${TB_TOP}" \
+      "${parameter_args[@]}" "${vcs_compile_coverage_args[@]}" \
+      -top "${TB_TOP}" \
       -o "${flow_work_dir}/simv" 2>&1 | tee "${flow_report_dir}/compile.log"
     simulation_binary="${flow_work_dir}/simv"
     simulation_args=("${vcs_run_coverage_args[@]}")
     ;;
   verilator)
+    parameter_args=()
+    if [[ "${MOSAIC_PROFILE_ACTIVE:-disabled}" == "enabled" ]]; then
+      mapfile -t parameter_args < <(
+        python3 "${PARAMETER_PROFILE_TOOL}" arguments \
+          --parameters "${PROFILE_PARAMETERS_JSON}" --backend verilator \
+          --top "${TB_TOP}"
+      )
+    fi
     verilator_coverage_args=()
     simulation_args=()
     if [[ "${coverage_enabled}" -eq 1 ]]; then
@@ -82,6 +99,7 @@ case "${SIMULATOR}" in
       "${property_args[@]}" "${assertion_args[@]}" \
       "${coverage_filelist_args[@]}" \
       "${verilator_coverage_args[@]}" \
+      "${parameter_args[@]}" \
       --top-module "${TB_TOP}" --Mdir "${flow_work_dir}/obj_dir" \
       2>&1 | tee "${flow_report_dir}/compile.log"
     simulation_binary="${flow_work_dir}/obj_dir/V${TB_TOP}"
