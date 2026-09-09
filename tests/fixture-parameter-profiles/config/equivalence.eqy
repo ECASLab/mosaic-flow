@@ -1,0 +1,11 @@
+[gold]
+read_verilog -sv rtl/profile_fixture.sv
+prep -top profile_fixture
+
+[gate]
+read_verilog work/yosys_synthesis/profile_fixture_netlist.v
+prep -top profile_fixture
+
+[strategy sat]
+use sat
+depth 2

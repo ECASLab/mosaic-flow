@@ -5,7 +5,7 @@ flow_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${flow_root}"
 
 mapfile -d '' shell_files < <(
-  find ci flows tests -path 'tests/fixture-module/work' -prune -o \
+  find ci flows tests -type d \( -name work -o -name reports \) -prune -o \
     -type f -name '*.sh' -print0 | sort -z
 )
 mapfile -d '' workflow_files < <(find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 | sort -z)
@@ -17,6 +17,7 @@ done
 shellcheck --external-sources "${shell_files[@]}"
 actionlint "${workflow_files[@]}"
 python3 -m py_compile ci/module_manifest.py
+python3 -m py_compile ci/parameter_profiles.py
 
 if ! grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' VERSION; then
   echo "VERSION must contain a semantic version such as 1.2.3" >&2
@@ -71,4 +72,5 @@ done < <(find . -path './.git' -prune -o -type f \( -name '*.tcl' -o -name '*.mk
 
 tests/test_quality_gate.sh
 tests/test_multi_module.sh
+tests/test_parameter_profiles.sh
 echo "mosaic-flow static quality checks passed"

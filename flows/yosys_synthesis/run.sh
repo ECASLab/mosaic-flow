@@ -24,9 +24,19 @@ while IFS= read -r filelist_entry || [[ -n "${filelist_entry}" ]]; do
   esac
 done < "${RTL_FILELIST}"
 
+parameter_commands=""
+if [[ "${MOSAIC_PROFILE_ACTIVE:-disabled}" == "enabled" ]]; then
+  parameter_commands="$(
+    python3 "${PARAMETER_PROFILE_TOOL}" arguments \
+      --parameters "${PROFILE_PARAMETERS_JSON}" --backend yosys \
+      --top "${DESIGN_TOP}"
+  )"
+fi
+
 cd "${REPO_ROOT}" || exit 2
 "${YOSYS_CMD:-yosys}" -l "${flow_report_dir}/synthesis.log" -p "
   read_verilog ${read_verilog_args};
+  ${parameter_commands}
   hierarchy -check -top ${DESIGN_TOP};
   proc;
   opt;

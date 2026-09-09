@@ -48,7 +48,7 @@ include $(FLOW_ROOT)/config/tools.mk
 include $(FLOW_ROOT)/mk/module.mk
 
 ifeq ($(MOSAIC_MULTI_MODULE),enabled)
-.PHONY: module-manifest-check module-list module-matrix all-modules
+.PHONY: module-manifest-check module-list module-matrix module-profile-matrix all-modules
 
 ## module-manifest-check Validate a multi-module project registry and layout
 module-manifest-check:
@@ -64,6 +64,16 @@ module-list:
 module-matrix:
 	@python3 "$(MOSAIC_MODULE_MANIFEST_TOOL)" matrix \
 		--manifest "$(MODULE_MANIFEST)" --module-root "$(MODULE_ROOT)"
+
+## module-profile-matrix Emit every module/profile pair as a GitHub Actions matrix
+module-profile-matrix:
+	+@set -o pipefail; \
+	python3 "$(MOSAIC_MODULE_MANIFEST_TOOL)" list \
+		--manifest "$(MODULE_MANIFEST)" --module-root "$(MODULE_ROOT)" | \
+	while IFS= read -r module_name; do \
+		$(MAKE) --no-print-directory --silent -f "$(MOSAIC_PROJECT_MAKEFILE)" \
+			MODULE="$${module_name}" profile-matrix; \
+	done | python3 "$(FLOW_ROOT)/ci/parameter_profiles.py" combine-matrices
 
 ## all-modules Run TARGET for every registered module with bounded parallelism
 all-modules: module-manifest-check

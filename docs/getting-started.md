@@ -101,6 +101,23 @@ not be portable.
 See [Configuration](configuration.md#design-and-path-variables) for optional
 technology variables and the exact meaning of each setting.
 
+## Qualify parameterized elaborations
+
+Add `config/parameter-profiles.json` when materially different parameter values
+need independently attributable evidence. Declare boundary values, nominal
+settings, feature toggles, and the flows required for each profile. Then run:
+
+```sh
+make profile-manifest-check
+make profile-list
+make clean all-profiles PROFILE_JOBS=4
+```
+
+Once a manifest exists, select `PROFILE=<name>` for individual flow targets.
+The methodology applies the exact parameter set and writes isolated work and
+reports below that profile name. The complete schema, evidence policy, and CI
+examples are in [Parameter-profile qualification](parameter-profiles.md).
+
 ## Understand PyUVM, SVA, and coverage
 
 PyUVM does not import or call SystemVerilog assertions from Python. PyUVM

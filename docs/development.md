@@ -187,6 +187,11 @@ selection, fallback resolution, concurrent execution, and output isolation.
 Update `tests/test_multi_module.sh` whenever the manifest or project bootstrap
 contract changes.
 
+`tests/fixture-parameter-profiles/` qualifies boundary widths, feature toggles,
+backend parameter translation, profile-local formal and equivalence inputs,
+concurrent execution, and aggregate evidence. Update
+`tests/test_parameter_profiles.sh` whenever the profile schema changes.
+
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by
 `ci/install_ci_tools.sh`.

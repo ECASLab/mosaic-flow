@@ -103,6 +103,7 @@ Validate and query the registry with:
 make module-manifest-check
 make module-list
 make module-matrix
+make module-profile-matrix
 ```
 
 Run one module with any normal target:
@@ -133,6 +134,11 @@ Each selected module defaults to:
 reports/<module>/<flow-id>/
 work/<module>/<flow-id>/
 ```
+
+If a selected module declares parameter profiles, the profile name is inserted
+before the flow ID. `module-profile-matrix` emits the Cartesian registry defined
+by each module's own manifest, while a module with no profile manifest emits one
+`default` entry. See [Parameter-profile qualification](parameter-profiles.md).
 
 `make MODULE=<name> clean` removes only that module's generated state. Running
 `make clean` without a selection removes the complete project work and report
@@ -180,10 +186,10 @@ jobs:
           persist-credentials: false
       - name: Generate matrix
         id: modules
-        run: echo "matrix=$(make module-matrix)" >> "${GITHUB_OUTPUT}"
+        run: echo "matrix=$(make module-profile-matrix)" >> "${GITHUB_OUTPUT}"
 
   rtl-checks:
-    name: ${{ matrix.name }} / native
+    name: ${{ matrix.job_name }} / native
     needs: module-matrix
     strategy:
       fail-fast: false
@@ -206,21 +212,22 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/mosaic
-          key: mosaic-${{ runner.os }}-${{ matrix.name }}-${{ needs.module-matrix.outputs.flow_revision }}
-      - run: make MODULE="${{ matrix.name }}" clean open-source
+          key: mosaic-${{ runner.os }}-${{ matrix.module }}-${{ matrix.profile }}-${{ needs.module-matrix.outputs.flow_revision }}
+      - run: make MODULE="${{ matrix.module }}" PROFILE="${{ matrix.profile }}" clean open-source
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.name }}-${{ matrix.artifact_suffix }}-reports
-          path: reports/${{ matrix.name }}/
+          name: ${{ matrix.job_name }}-reports
+          path: reports/${{ matrix.module }}/
           if-no-files-found: error
 ```
 
-Container jobs use the same matrix and pass `MODULE=${{ matrix.name }}` to the
-container command. Give every job a module-qualified cache scope, image tag,
-artifact name, report path, and diagnostic log. In both native and container
-jobs, read the expected methodology revision from the parent gitlink and verify
-the checked-out or embedded revision before running the flow.
+Container jobs use the same matrix and pass `MODULE=${{ matrix.module }}` and
+`PROFILE=${{ matrix.profile }}` to the container command. Give every job a
+module/profile-qualified cache scope, image tag, artifact name, report path, and
+diagnostic log. In both native and container jobs, read the expected methodology
+revision from the parent gitlink and verify the checked-out or embedded revision
+before running the flow.
 
 ## Migrate an existing repository
 
@@ -238,8 +245,8 @@ For a repository with consumer-owned orchestration such as `mosaic-common`:
    isolated paths are sufficient.
 6. Replace formatter wrapper scripts with `VERIBLE_FORMAT_ARGS` and
    `VERIBLE_FORMAT_PATHS` where possible.
-7. Generate the CI matrix through `make module-matrix` and retain exact gitlink
-   verification in every job.
+7. Generate the CI matrix through `make module-profile-matrix` when any module
+   declares profiles, and retain exact gitlink verification in every job.
 
 Run `make module-manifest-check` before removing the old orchestration, then
 compare one native and one containerized result per module.

@@ -1,0 +1,1 @@
+# No Verible waivers are required by the parameter-profile fixture.

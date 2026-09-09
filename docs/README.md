@@ -14,13 +14,15 @@ maintainers, and contributors to the methodology itself.
    boundary, and execution model.
 3. [Multi-module projects](multi-module-projects.md) defines manifests, module
    selection, concurrent execution, isolated evidence, and CI matrices.
-4. [Configuration](configuration.md) is the reference for module variables,
+4. [Parameter profiles](parameter-profiles.md) defines representative
+   elaborations, backend overrides, evidence isolation, and profile matrices.
+5. [Configuration](configuration.md) is the reference for module variables,
    flow states, dependencies, tools, and overrides.
-5. [Flow catalog](flows.md) describes every open-source and commercial flow,
+6. [Flow catalog](flows.md) describes every open-source and commercial flow,
    including inputs, outputs, and upstream documentation.
-6. [Results and quality gates](results-and-quality-gates.md) defines statuses,
+7. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, CI behavior, and release evidence.
-7. [Methodology development](development.md) explains how to change, test,
+8. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -34,6 +36,9 @@ maintainers, and contributors to the methodology itself.
 | Validate a module registry | `make module-manifest-check` |
 | Generate a CI module matrix | `make module-matrix` |
 | Run every registered module | `make all-modules TARGET=open-source` |
+| Validate parameter profiles | `make profile-manifest-check` |
+| Run every parameter profile | `make all-profiles PROFILE_TARGET=open-source` |
+| Generate a module/profile matrix | `make module-profile-matrix` |
 | Run one check | See the [flow catalog](flows.md) |
 | Run all licensed local checks | `make synopsys-all` |
 | Select or disable flows | Module `config/flows.mk` |
@@ -52,11 +57,13 @@ most important implementation entry points are:
 - `mk/module.mk` for public Make targets and the dependency graph
 - `mk/project.mk` for multi-module selection and configuration loading
 - `ci/module_manifest.py` for module registry validation and matrix generation
+- `ci/parameter_profiles.py` for parameter translation and profile evidence
 - `ci/run_flow.sh` for execution eligibility and status recording
 - `ci/*_quality_gate.sh` for acceptance policy
 - `flows/<flow-name>/` for tool adapters
 - `tests/fixture-module/` for repository-level integration coverage
 - `tests/fixture-multi-module/` for concurrent project orchestration coverage
+- `tests/fixture-parameter-profiles/` for parameter-matrix qualification
 
 Please update the relevant document in the same change whenever one of these
 contracts changes.

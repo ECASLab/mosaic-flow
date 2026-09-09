@@ -1,0 +1,78 @@
+{
+  "schema": "mosaic-parameter-profiles-v1",
+  "include": [
+    {
+      "name": "width_min",
+      "parameters": {
+        "FEATURE_INVERT": false,
+        "WIDTH": 1
+      },
+      "flows": [
+        "verible_lint",
+        "verible_format",
+        "slang_elaboration",
+        "verilator_lint",
+        "yosys_synthesis",
+        "symbiyosys_formal",
+        "eqy_equivalence",
+        "verilator_sim",
+        "pyuvm_open_source"
+      ]
+    },
+    {
+      "name": "nominal",
+      "parameters": {
+        "FEATURE_INVERT": false,
+        "WIDTH": 8
+      },
+      "flows": [
+        "verible_lint",
+        "verible_format",
+        "slang_elaboration",
+        "verilator_lint",
+        "yosys_synthesis",
+        "symbiyosys_formal",
+        "eqy_equivalence",
+        "verilator_sim",
+        "pyuvm_open_source"
+      ]
+    },
+    {
+      "name": "feature_invert",
+      "parameters": {
+        "FEATURE_INVERT": true,
+        "WIDTH": 5
+      },
+      "flows": [
+        "verible_lint",
+        "verible_format",
+        "slang_elaboration",
+        "verilator_lint",
+        "yosys_synthesis",
+        "symbiyosys_formal",
+        "eqy_equivalence",
+        "verilator_sim",
+        "pyuvm_open_source"
+      ],
+      "tops": {
+        "design": "profile_fixture",
+        "formal": "profile_fixture_formal",
+        "pyuvm": "profile_fixture",
+        "testbench": "profile_fixture_tb"
+      }
+    },
+    {
+      "name": "elaboration_only",
+      "parameters": {
+        "FEATURE_INVERT": false,
+        "WIDTH": 3
+      },
+      "flows": [
+        "verible_lint",
+        "verible_format",
+        "slang_elaboration",
+        "verilator_lint"
+      ]
+    }
+  ]
+}
