@@ -16,6 +16,7 @@ done
 
 shellcheck --external-sources "${shell_files[@]}"
 actionlint "${workflow_files[@]}"
+python3 -m py_compile ci/module_manifest.py
 
 if ! grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' VERSION; then
   echo "VERSION must contain a semantic version such as 1.2.3" >&2
@@ -69,4 +70,5 @@ while IFS= read -r -d '' data_file; do
 done < <(find . -path './.git' -prune -o -type f \( -name '*.tcl' -o -name '*.mk' -o -name '*.env' \) -print0)
 
 tests/test_quality_gate.sh
+tests/test_multi_module.sh
 echo "mosaic-flow static quality checks passed"

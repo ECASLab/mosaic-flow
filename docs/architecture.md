@@ -57,6 +57,7 @@ mosaic-flow/
 |-- mk/module.mk             Make API imported by module repositories
 |-- tests/
 |   |-- fixture-module/      Minimal independent consumer used by CI
+|   |-- fixture-multi-module/ Multi-module selection and concurrency fixture
 |   `-- test_quality_gate.sh Configuration and quality-gate unit tests
 |-- README.md                Repository overview
 `-- VERSION                  Methodology semantic version
@@ -120,6 +121,12 @@ make FLOW_ROOT=/path/to/mosaic-flow open-source
 ```
 
 The module's recorded submodule revision remains the release authority.
+
+For a manifest-based repository, the root Makefile imports `mk/project.mk`.
+That bootstrap validates and loads `config/modules/<module>.mk`, selects the
+matching flow policy, derives module-qualified report and work roots, and then
+imports the same `config/tools.mk` and `mk/module.mk` API. See
+[Multi-module projects](multi-module-projects.md).
 
 ## Execution lifecycle
 

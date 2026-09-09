@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-modules-v1",
+  "include": [
+    {
+      "name": "alpha",
+      "artifact_suffix": "native"
+    },
+    {
+      "name": "beta",
+      "artifact_suffix": "native"
+    }
+  ]
+}

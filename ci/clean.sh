@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rm -rf -- "${MODULE_ROOT}/work"
-if [[ -d "${MODULE_ROOT}/reports" ]]; then
-  find "${MODULE_ROOT}/reports" -mindepth 1 ! -name .gitkeep -delete
+work_root="${WORK_DIR:-${MODULE_ROOT}/work}"
+report_root="${REPORT_DIR:-${MODULE_ROOT}/reports}"
+
+rm -rf -- "${work_root}"
+if [[ -d "${report_root}" ]]; then
+  find "${report_root}" -mindepth 1 ! -name .gitkeep -delete
 fi

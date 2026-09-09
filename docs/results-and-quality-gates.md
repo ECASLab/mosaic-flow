@@ -131,11 +131,16 @@ The fixture integration job runs:
 
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$GITHUB_WORKSPACE" clean open-source
+make -C tests/fixture-multi-module FLOW_ROOT="$GITHUB_WORKSPACE" clean all-modules MODULE_JOBS=2
 ```
 
 It caches pinned tools and uploads fixture reports even when the flow fails. The
 fixture is deliberately independent of `mosaic-module-template`, so the
 methodology can prove its own consumer contract before release.
+
+The multi-module fixture independently qualifies named and fallback input
+resolution, module-specific policy loading, formatter options, isolated work
+and reports, aggregate failure propagation, and deterministic CI matrix output.
 
 The fixture keeps `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and
 `COVERAGE_FILELIST` separate, then uses each list in its normal testbench,

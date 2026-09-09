@@ -182,6 +182,11 @@ Add a focused regression for each bug fixed in orchestration or gate logic.
 repositories. It uses `tests/fixture-module/` and qualifies both shell-level
 policy and the complete portable EDA path.
 
+`tests/fixture-multi-module/` separately qualifies registry validation,
+selection, fallback resolution, concurrent execution, and output isolation.
+Update `tests/test_multi_module.sh` whenever the manifest or project bootstrap
+contract changes.
+
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by
 `ci/install_ci_tools.sh`.

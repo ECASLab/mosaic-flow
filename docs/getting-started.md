@@ -6,8 +6,10 @@ For the portable open-source flow, use:
 
 - Linux x86-64 for automatic binary installation
 - GNU Make
+- GNU `xargs` from findutils for multi-module parallel execution
 - Bash
 - Git
+- Python 3
 - `curl`, `tar`, and `sha256sum`
 - Network access during the first tool installation
 
@@ -51,6 +53,10 @@ include $(FLOW_ROOT)/mk/module.mk
 
 Keeping this file thin lets a methodology update change orchestration and tool
 versions by moving one Git pointer.
+
+Repositories with multiple independently selectable RTL modules should import
+`mk/project.mk` instead. See [Multi-module projects](multi-module-projects.md)
+for the manifest, module profile, concurrent execution, and CI contracts.
 
 ## Define the module contract
 

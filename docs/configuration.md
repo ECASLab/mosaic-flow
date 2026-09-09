@@ -11,6 +11,11 @@
 | Module `config/flows.mk` | Module | Enabled and disabled flows, dependency overrides |
 | Module `flows/<name>/...` | Module | Tool-specific design intent and waivers |
 
+Multi-module repositories replace the two module configuration rows with
+`config/modules.json`, `config/modules/<module>.mk`, and
+`config/modules/<module>-flows.mk`. The complete contract is documented in
+[Multi-module projects](multi-module-projects.md).
+
 ## Precedence and override rules
 
 Shared flow defaults use `?=`. The module's `config/flows.mk` is included after
@@ -164,6 +169,9 @@ The shared environment adapter requires these variables for every tool adapter:
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
 
+When `mk/project.mk` selects a manifest entry, `REPORT_DIR` and `WORK_DIR`
+default to `reports/<module>` and `work/<module>`.
+
 Flow-specific inputs are required when their flow is enabled:
 
 | Variable | Consumer |
@@ -311,6 +319,24 @@ make synopsys-synth
 The current OpenROAD wrapper invokes the OpenROAD Flow Scripts Makefile. It
 uses `OPENROAD_FLOW_ROOT` and `OPENROAD_CONFIG` rather than invoking
 `OPENROAD_CMD` directly.
+
+`VERIBLE_FORMAT_ARGS` provides whitespace-separated formatter options such as
+`--indentation_spaces=4`. `VERIBLE_FORMAT_PATHS` selects the module-owned files
+or directories checked by the formatting flow and defaults to `rtl verif`.
+
+## Multi-module variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MODULE_MANIFEST` | `$(MODULE_ROOT)/config/modules.json` | Versioned module registry |
+| `MODULE` | Empty | Selected manifest entry for one flow invocation |
+| `TARGET` | `open-source` | Target dispatched by `all-modules` |
+| `MODULE_JOBS` | `JOBS` or `0` | Maximum concurrent module invocations; zero means unbounded |
+| `MODULE_DESIGN_CONFIG` | `config/modules/<MODULE>.mk` | Selected design profile |
+| `MODULE_FLOW_CONFIG` | `config/modules/<MODULE>-flows.mk` | Selected flow policy |
+
+Use `mk/project.mk` to activate these variables. The legacy single-module
+import remains supported without a manifest.
 
 ## Open-source tool cache
 
