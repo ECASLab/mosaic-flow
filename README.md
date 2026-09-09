@@ -15,6 +15,7 @@ methodology without copying flow scripts or changing module RTL.
 - Make targets and flow dependency orchestration
 - Open-source and Synopsys tool adapters
 - Optional PyUVM verification with open-source, VCS, and Xcelium backends
+- Single-module and manifest-based multi-module project orchestration
 - Flow selection, statuses, reports, and quality gates
 - Pinned open-source tool installers and versions
 - Methodology CI and its independent fixture module
@@ -56,9 +57,16 @@ include $(FLOW_ROOT)/config/tools.mk
 include $(FLOW_ROOT)/mk/module.mk
 ```
 
+A repository containing multiple independently qualified modules instead uses
+the project bootstrap and a validated module manifest:
+
+```make
+include $(FLOW_ROOT)/mk/project.mk
+```
+
 See [Getting started](docs/getting-started.md) for the complete module contract
-and [Configuration](docs/configuration.md) for flow selection, dependencies,
-tool overrides, and technology setup.
+and [Multi-module projects](docs/multi-module-projects.md) for registry,
+selection, concurrent execution, and CI matrix guidance.
 
 ## Methodology validation
 
@@ -69,6 +77,7 @@ complete portable fixture flow:
 ci/install_ci_tools.sh "$HOME/.local"
 PATH="$HOME/.local/bin:$PATH" ci/check_flow_quality.sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
+make -C tests/fixture-multi-module FLOW_ROOT="$PWD" clean all-modules MODULE_JOBS=2
 ```
 
 GitHub Actions runs the same validation on pushes and pull requests. Commercial

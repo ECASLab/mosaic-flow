@@ -38,6 +38,12 @@ export SLANG_CMD ?=slang
 export VERIBLE_LINT_CMD ?=verible-verilog-lint
 # VERIBLE_FORMAT_CMD: Verible executable used for formatting checks.
 export VERIBLE_FORMAT_CMD ?=verible-verilog-format
+# VERIBLE_FORMAT_ARGS: Optional whitespace-separated formatting policy arguments,
+# such as --indentation_spaces=4, supplied by the selected module profile.
+export VERIBLE_FORMAT_ARGS ?=
+# VERIBLE_FORMAT_PATHS: Whitespace-separated module-owned files or directories
+# checked by the formatter. Multi-module profiles should narrow the default paths.
+export VERIBLE_FORMAT_PATHS ?=rtl verif
 # OPENROAD_CMD: OpenROAD executable used by the physical implementation adapter.
 export OPENROAD_CMD ?=openroad
 # VC_LINT_BIN: VC SpyGlass executable used by the licensed lint adapter.

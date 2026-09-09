@@ -2,7 +2,8 @@ export CDC_TOOL ?= vc
 export FORCE_FLOW ?= 0
 
 include $(FLOW_ROOT)/config/flows.mk
--include $(MODULE_ROOT)/config/flows.mk
+MODULE_FLOW_CONFIG ?= $(MODULE_ROOT)/config/flows.mk
+-include $(MODULE_FLOW_CONFIG)
 
 mosaic_flow_state_is_valid = $(and $(filter 1,$(words $(1))),$(filter $(1),enabled disabled))
 MOSAIC_INVALID_FLOW_STATES := $(strip $(foreach flow,$(MOSAIC_FLOW_IDS),$(if $(call mosaic_flow_state_is_valid,$(FLOW_$(flow))),,$(flow)=$(FLOW_$(flow)))))
@@ -49,13 +50,19 @@ $(FLOW_TARGET_$(1)): $(foreach dependency,$(FLOW_DEPENDENCIES_$(1)),$(FLOW_TARGE
 endef
 $(foreach flow,$(MOSAIC_FLOW_IDS),$(eval $(call mosaic_add_flow_dependencies,$(flow))))
 
-.PHONY: help flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+.PHONY: help mosaic-module-selection-check flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
-	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk"
+	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk" "$(FLOW_ROOT)/mk/project.mk"
+
+mosaic-module-selection-check:
+	@if [[ "$(MOSAIC_MULTI_MODULE)" == "enabled" && -z "$(MODULE)" ]]; then \
+		echo "This is a multi-module project; select MODULE=<name> or use all-modules" >&2; \
+		exit 2; \
+	fi
 
 ## flow-config-check Validate and display the project flow selection
-flow-config-check:
+flow-config-check: mosaic-module-selection-check
 	@"$(FLOW_ROOT)/ci/check_flow_config.sh"
 
 ## setup-open-source Install missing pinned open-source tools in the user cache
@@ -63,7 +70,8 @@ setup-open-source:
 	@"$(FLOW_ROOT)/ci/setup_open_source_tools.sh"
 
 $(MOSAIC_FLOW_TARGETS): | flow-config-check
-$(OPEN_FLOW_TARGETS) open-waiver-draft: | setup-open-source
+$(OPEN_FLOW_TARGETS): | setup-open-source
+open-waiver-draft: mosaic-module-selection-check | setup-open-source
 
 ## open-source  Run every open-source CI check and its quality gate
 open-source: open-quality-gate

@@ -12,13 +12,15 @@ maintainers, and contributors to the methodology itself.
    repository to `mosaic-flow` and run the first checks.
 2. [Architecture](architecture.md) explains the repository hierarchy, ownership
    boundary, and execution model.
-3. [Configuration](configuration.md) is the reference for module variables,
+3. [Multi-module projects](multi-module-projects.md) defines manifests, module
+   selection, concurrent execution, isolated evidence, and CI matrices.
+4. [Configuration](configuration.md) is the reference for module variables,
    flow states, dependencies, tools, and overrides.
-4. [Flow catalog](flows.md) describes every open-source and commercial flow,
+5. [Flow catalog](flows.md) describes every open-source and commercial flow,
    including inputs, outputs, and upstream documentation.
-5. [Results and quality gates](results-and-quality-gates.md) defines statuses,
+6. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, CI behavior, and release evidence.
-6. [Methodology development](development.md) explains how to change, test,
+7. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -29,6 +31,9 @@ maintainers, and contributors to the methodology itself.
 | Validate resolved flow policy | `make flow-config-check` |
 | Prepare pinned open-source tools | `make setup-open-source` |
 | Run the portable quality gate | `make open-source` |
+| Validate a module registry | `make module-manifest-check` |
+| Generate a CI module matrix | `make module-matrix` |
+| Run every registered module | `make all-modules TARGET=open-source` |
 | Run one check | See the [flow catalog](flows.md) |
 | Run all licensed local checks | `make synopsys-all` |
 | Select or disable flows | Module `config/flows.mk` |
@@ -45,10 +50,13 @@ most important implementation entry points are:
 - `config/flows.mk` for canonical flow IDs, default states, and dependencies
 - `config/tools.mk` for executable defaults and the shared tool cache
 - `mk/module.mk` for public Make targets and the dependency graph
+- `mk/project.mk` for multi-module selection and configuration loading
+- `ci/module_manifest.py` for module registry validation and matrix generation
 - `ci/run_flow.sh` for execution eligibility and status recording
 - `ci/*_quality_gate.sh` for acceptance policy
 - `flows/<flow-name>/` for tool adapters
 - `tests/fixture-module/` for repository-level integration coverage
+- `tests/fixture-multi-module/` for concurrent project orchestration coverage
 
 Please update the relevant document in the same change whenever one of these
 contracts changes.
