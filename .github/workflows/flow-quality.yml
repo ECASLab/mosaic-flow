@@ -75,6 +75,9 @@ jobs:
             METHODOLOGY_REVISION="${GITHUB_SHA}" \
             release-manifest release-manifest-validate
 
+      - name: Validate complete fixture release evidence contents
+        run: EXPECT_CLEAN_RELEASE=true tests/check_fixture_release_manifest.sh
+
       - name: Upload fixture reports
         if: always()
         uses: actions/upload-artifact@v4
