@@ -38,6 +38,7 @@ Complete portable fixture integration:
 
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
+tests/test_release_manifest.sh
 ```
 
 Review `tests/fixture-module/reports/` when integration fails. Do not use the
@@ -191,6 +192,13 @@ contract changes.
 backend parameter translation, profile-local formal and equivalence inputs,
 concurrent execution, and aggregate evidence. Update
 `tests/test_parameter_profiles.sh` whenever the profile schema changes.
+
+`tests/test_release_manifest.sh` builds a temporary consumer repository and
+qualifies manifest generation, deterministic comparison, input hashing,
+approved skips, supplemental gates, dirty-tree policy, and negative status and
+revision handling. The workflow runs it both natively and in the pinned
+container job. Extend this fixture whenever the release schema or policy
+changes.
 
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by

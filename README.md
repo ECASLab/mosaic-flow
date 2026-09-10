@@ -18,6 +18,7 @@ methodology without copying flow scripts or changing module RTL.
 - Single-module and manifest-based multi-module project orchestration
 - Named parameter-profile qualification across elaboration and implementation
 - Flow selection, statuses, reports, and quality gates
+- Schema-validated release evidence with input hashes and tool identities
 - Pinned open-source tool installers and versions
 - Methodology CI and its independent fixture module
 
@@ -82,6 +83,7 @@ PATH="$HOME/.local/bin:$PATH" ci/check_flow_quality.sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
 make -C tests/fixture-multi-module FLOW_ROOT="$PWD" clean all-modules MODULE_JOBS=2
 make -C tests/fixture-parameter-profiles FLOW_ROOT="$PWD" clean all-profiles PROFILE_JOBS=4
+tests/test_release_manifest.sh
 ```
 
 GitHub Actions runs the same validation on pushes and pull requests. Commercial

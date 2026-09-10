@@ -175,24 +175,14 @@ retain `FAIL`.
 
 ## Release evidence
 
-A module release should retain enough information to reproduce and review the
-decision. At minimum, record:
+`make release-manifest` validates every canonical flow status and creates a
+schema-versioned JSON index plus a short text summary. It records revisions,
+dirty state, technology, tool versions, input hashes, coverage, supplemental
+gates, and execution context. See [Release evidence](release-evidence.md) for
+the complete policy, configuration, CI example, and migration procedure.
 
-- Module Git revision
-- `mosaic-flow` Git revision and semantic version
-- Tool names and versions
-- Flow configuration and selected CDC engine
-- Constraint, UPF, and waiver revisions
-- PDK, libraries, operating condition, and analysis corner where applicable
-- Status and principal reports for every enabled flow
-- Test identity, seed policy, and functional coverage summary
-- Formal properties and proof status
-- Activity source and annotation coverage for power analysis
-- Date and execution environment
-
-Generated databases and full logs should normally be stored as CI or release
-artifacts. Small reviewed manifests and source-controlled waiver records belong
-in Git. Do not commit licensed libraries, credentials, or large work databases.
+Generated databases and full logs should remain CI or release artifacts. Do
+not commit licensed libraries, credentials, or large work databases.
 
 ## Interpreting failures
 

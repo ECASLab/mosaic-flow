@@ -21,8 +21,10 @@ maintainers, and contributors to the methodology itself.
 6. [Flow catalog](flows.md) describes every open-source and commercial flow,
    including inputs, outputs, and upstream documentation.
 7. [Results and quality gates](results-and-quality-gates.md) defines statuses,
-   waivers, generated artifacts, CI behavior, and release evidence.
-8. [Methodology development](development.md) explains how to change, test,
+   waivers, generated artifacts, and CI behavior.
+8. [Release evidence](release-evidence.md) defines the manifest schema,
+   acceptance policy, extension points, and release integration.
+9. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -39,6 +41,7 @@ maintainers, and contributors to the methodology itself.
 | Validate parameter profiles | `make profile-manifest-check` |
 | Run every parameter profile | `make all-profiles PROFILE_TARGET=open-source` |
 | Generate a module/profile matrix | `make module-profile-matrix` |
+| Generate release evidence | `make release-manifest release-manifest-validate` |
 | Run one check | See the [flow catalog](flows.md) |
 | Run all licensed local checks | `make synopsys-all` |
 | Select or disable flows | Module `config/flows.mk` |
@@ -58,12 +61,14 @@ most important implementation entry points are:
 - `mk/project.mk` for multi-module selection and configuration loading
 - `ci/module_manifest.py` for module registry validation and matrix generation
 - `ci/parameter_profiles.py` for parameter translation and profile evidence
+- `ci/release_manifest.py` for release evidence generation and validation
 - `ci/run_flow.sh` for execution eligibility and status recording
 - `ci/*_quality_gate.sh` for acceptance policy
 - `flows/<flow-name>/` for tool adapters
 - `tests/fixture-module/` for repository-level integration coverage
 - `tests/fixture-multi-module/` for concurrent project orchestration coverage
 - `tests/fixture-parameter-profiles/` for parameter-matrix qualification
+- `tests/test_release_manifest.sh` for manifest acceptance-policy coverage
 
 Please update the relevant document in the same change whenever one of these
 contracts changes.

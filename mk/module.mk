@@ -2,6 +2,7 @@ export CDC_TOOL ?= vc
 export FORCE_FLOW ?= 0
 
 include $(FLOW_ROOT)/config/flows.mk
+MODULE_DESIGN_CONFIG ?= $(MODULE_ROOT)/config/design.mk
 MODULE_FLOW_CONFIG ?= $(MODULE_ROOT)/config/flows.mk
 -include $(MODULE_FLOW_CONFIG)
 
@@ -72,6 +73,83 @@ export $(foreach flow,$(MOSAIC_FLOW_IDS),FLOW_$(flow) FLOW_DEPENDENCIES_$(flow))
 
 FLOW_RUNNER := $(FLOW_ROOT)/ci/run_flow.sh
 
+# RELEASE_MANIFEST_TOOL: Methodology-owned generator and validator.
+RELEASE_MANIFEST_TOOL ?= $(FLOW_ROOT)/ci/release_manifest.py
+# RELEASE_MODULE_NAME: Stable module identity written into release evidence.
+RELEASE_MODULE_NAME ?= $(if $(MODULE),$(MODULE),$(DESIGN_TOP))
+# MODULE_REVISION: Exact 40-digit module commit. Empty permits local Git fallback.
+MODULE_REVISION ?=
+# METHODOLOGY_REVISION: Exact 40-digit mosaic-flow commit. Empty permits local Git fallback.
+METHODOLOGY_REVISION ?=
+# RELEASE_EXECUTION_CONTEXT: Output namespace and execution label, such as native or container.
+RELEASE_EXECUTION_CONTEXT ?= native
+# RELEASE_ALLOW_DIRTY: Permit a dirty module checkout only for local diagnostics.
+RELEASE_ALLOW_DIRTY ?= disabled
+# RELEASE_MODULE_DIRTY: Explicit true or false for a packaged module without Git metadata.
+RELEASE_MODULE_DIRTY ?=
+# RELEASE_METHODOLOGY_DIRTY: Explicit true or false for packaged mosaic-flow source.
+RELEASE_METHODOLOGY_DIRTY ?=
+# RELEASE_TECHNOLOGY: Human-readable technology or technology-independent context.
+RELEASE_TECHNOLOGY ?= technology-independent
+# RELEASE_TECHNOLOGY_METADATA_JSON: Structured technology, PDK, library, and corner details.
+RELEASE_TECHNOLOGY_METADATA_JSON ?= {}
+# RELEASE_METADATA_JSON: Arbitrary module-owned deterministic release metadata.
+RELEASE_METADATA_JSON ?= {}
+# RELEASE_EXECUTION_METADATA_JSON: Arbitrary volatile runner or container metadata.
+RELEASE_EXECUTION_METADATA_JSON ?= {}
+# RELEASE_ADDITIONAL_TOOLS_JSON: Additional tool commands and associated canonical flows.
+RELEASE_ADDITIONAL_TOOLS_JSON ?= []
+# RELEASE_COVERAGE_EVIDENCE_JSON: Additional native or functional coverage records.
+RELEASE_COVERAGE_EVIDENCE_JSON ?= []
+# RELEASE_SUPPLEMENTAL_GATES: Module-owned gate IDs with reports/<id>/status.txt evidence.
+RELEASE_SUPPLEMENTAL_GATES ?=
+# RELEASE_ADDITIONAL_INPUTS: Required files or directories added to the hashed input set.
+RELEASE_ADDITIONAL_INPUTS ?=
+# RELEASE_ADDITIONAL_EVIDENCE: Required generated files indexed by path and SHA-256.
+RELEASE_ADDITIONAL_EVIDENCE ?=
+# RELEASE_MANIFEST_DIR: Context-specific output directory below the selected report root.
+RELEASE_MANIFEST_DIR ?= $(REPORT_DIR)/release_manifest/$(RELEASE_EXECUTION_CONTEXT)
+
+RELEASE_STANDARD_INPUTS := \
+	$(MODULE_DESIGN_CONFIG) \
+	$(MODULE_FLOW_CONFIG) \
+	$(if $(wildcard $(MODULE_MANIFEST)),$(MODULE_MANIFEST)) \
+	$(if $(wildcard $(PARAMETER_PROFILE_MANIFEST)),$(PARAMETER_PROFILE_MANIFEST)) \
+	$(VERILATOR_WAIVER_FILE) \
+	$(VERIBLE_WAIVER_FILE) \
+	$(VERIBLE_RULES_FILE) \
+	$(FORMAL_CONFIG) \
+	$(FORMAL_COVER_CONFIG) \
+	$(FORMAL_COVERAGE_CONFIG) \
+	$(EQUIVALENCE_CONFIG) \
+	$(OPENROAD_CONFIG) \
+	$(SYNTHESIS_CONSTRAINT_FILE) \
+	$(ASYNC_SYNTHESIS_CONSTRAINT_FILE) \
+	$(OPENROAD_CONSTRAINT_FILE) \
+	$(CDC_CONFIG) \
+	$(DFT_CONFIG) \
+	$(UPF_CONFIG) \
+	$(if $(SYNTHESIS_CONSTRAINT_FILE),,$(CONSTRAINT_DIR)) \
+	$(if $(PYUVM_TEST_MODULE),$(PYUVM_TEST_PATH))
+RELEASE_FILELISTS := $(sort $(strip \
+	$(RTL_FILELIST) \
+	$(TB_FILELIST) \
+	$(FORMAL_FILELIST) \
+	$(PROPERTY_FILELIST) \
+	$(ASSERTION_FILELIST) \
+	$(COVERAGE_FILELIST) \
+	$(PYUVM_FILELIST)))
+RELEASE_INPUT_FILES := $(sort $(strip $(RELEASE_STANDARD_INPUTS) $(RELEASE_ADDITIONAL_INPUTS)))
+
+export RELEASE_MANIFEST_TOOL RELEASE_MODULE_NAME MODULE_REVISION METHODOLOGY_REVISION
+export RELEASE_EXECUTION_CONTEXT RELEASE_ALLOW_DIRTY RELEASE_TECHNOLOGY
+export RELEASE_MODULE_DIRTY RELEASE_METHODOLOGY_DIRTY
+export RELEASE_TECHNOLOGY_METADATA_JSON RELEASE_METADATA_JSON
+export RELEASE_EXECUTION_METADATA_JSON RELEASE_ADDITIONAL_TOOLS_JSON
+export RELEASE_COVERAGE_EVIDENCE_JSON RELEASE_SUPPLEMENTAL_GATES
+export RELEASE_ADDITIONAL_INPUTS RELEASE_ADDITIONAL_EVIDENCE RELEASE_MANIFEST_DIR
+export RELEASE_FILELISTS RELEASE_INPUT_FILES
+
 OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-quality-gate
 OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm
 
@@ -103,7 +181,7 @@ $(FLOW_TARGET_$(1)): $(foreach dependency,$(FLOW_DEPENDENCIES_$(1)),$(FLOW_TARGE
 endef
 $(foreach flow,$(MOSAIC_FLOW_IDS),$(eval $(call mosaic_add_flow_dependencies,$(flow))))
 
-.PHONY: help mosaic-module-selection-check mosaic-profile-selection-check profile-manifest-check profile-list profile-matrix profile-evidence flow-config-check setup-open-source $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
+.PHONY: help mosaic-module-selection-check mosaic-profile-selection-check profile-manifest-check profile-list profile-matrix profile-evidence flow-config-check setup-open-source release-manifest release-manifest-validate $(OPEN_SOURCE_TARGETS) open-physical commercial-pyuvm synopsys-all synopsys-check-env synopsys-sim synopsys-lint synopsys-cdc synopsys-dft synopsys-lp synopsys-static synopsys-synth synopsys-sta synopsys-power synopsys-quality-gate clean
 
 help:
 	@sed -n 's/^## //p' "$(FLOW_ROOT)/mk/module.mk" "$(FLOW_ROOT)/mk/project.mk"
@@ -159,6 +237,19 @@ profile-evidence: mosaic-profile-selection-check
 			--design-top "$(DESIGN_TOP)" --testbench-top "$(TB_TOP)" \
 			--formal-top "$(FORMAL_TOP)" --pyuvm-top "$(PYUVM_TOP)"; \
 	fi
+
+## release-manifest Generate and validate context-specific release evidence
+release-manifest: flow-config-check
+	@python3 "$(RELEASE_MANIFEST_TOOL)" generate \
+		--module-root "$(MODULE_ROOT)" \
+		--flow-root "$(FLOW_ROOT)" \
+		--report-dir "$(REPORT_DIR)" \
+		--output-dir "$(RELEASE_MANIFEST_DIR)"
+
+## release-manifest-validate Validate an existing context-specific manifest
+release-manifest-validate: mosaic-module-selection-check
+	@python3 "$(RELEASE_MANIFEST_TOOL)" validate \
+		--manifest "$(RELEASE_MANIFEST_DIR)/manifest.json"
 
 ifeq ($(MOSAIC_PARAMETER_PROFILES),enabled)
 .PHONY: all-profiles
