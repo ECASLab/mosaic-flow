@@ -200,6 +200,11 @@ revision handling. The workflow runs it both natively and in the pinned
 container job. Extend this fixture whenever the release schema or policy
 changes.
 
+`tests/check_fixture_release_manifest.sh` checks the complete portable fixture
+after real tool execution. It requires every canonical flow decision, portable
+tool identity, representative design input, both coverage classes, and the
+human-readable summary to be present in the generated release artifact.
+
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by
 `ci/install_ci_tools.sh`.

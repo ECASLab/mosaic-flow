@@ -155,6 +155,8 @@ expect_failure() {
 
 generate_manifest "${output_dir}" >/dev/null
 python3 "${release_tool}" validate --manifest "${output_dir}/manifest.json" >/dev/null
+test "$(<"${output_dir}/status.txt")" = PASS
+grep -Fq "MOSAIC release evidence" "${output_dir}/summary.txt"
 
 python3 - "${output_dir}/manifest.json" "${fixture_context}" <<'PY'
 import json
@@ -245,6 +247,22 @@ expect_failure "Required flow verible_lint is missing status evidence" \
 printf 'PASS\n' >"${report_dir}/verible_lint/status.txt"
 
 mkdir -p "${report_dir}/openroad"
+printf 'SKIP\n' >"${report_dir}/openroad/status.txt"
+generate_manifest "${output_dir}" >/dev/null
+python3 - "${output_dir}/manifest.json" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+openroad = next(
+    flow for flow in manifest["deterministic"]["flows"]
+    if flow["id"] == "openroad"
+)
+assert openroad["status"] == "SKIP"
+assert openroad["status_evidence"]["sha256"]
+PY
+
 printf 'PASS\n' >"${report_dir}/openroad/status.txt"
 expect_failure "Disabled flow openroad has status PASS" \
   generate_manifest "${output_dir}"
@@ -254,6 +272,21 @@ rm "${report_dir}/qualification/status.txt"
 expect_failure "Supplemental gate qualification is missing status evidence" \
   generate_manifest "${output_dir}"
 printf 'PASS\n' >"${report_dir}/qualification/status.txt"
+
+printf 'SKIP\n' >"${report_dir}/verible_lint/status.txt"
+expect_failure "Required flow verible_lint has status SKIP" \
+  generate_manifest "${output_dir}"
+printf 'PASS\n' >"${report_dir}/verible_lint/status.txt"
+
+printf 'FAIL\n' >"${report_dir}/qualification/status.txt"
+expect_failure "Supplemental gate qualification has status FAIL" \
+  generate_manifest "${output_dir}"
+printf 'PASS\n' >"${report_dir}/qualification/status.txt"
+
+rm "${report_dir}/qualification/summary.json"
+expect_failure "Required release evidence is missing" \
+  generate_manifest "${output_dir}"
+printf '{"review":"complete"}\n' >"${report_dir}/qualification/summary.json"
 
 expect_failure "module revision must contain exactly 40 hex digits" \
   generate_manifest "${output_dir}" MODULE_REVISION=bad-revision
