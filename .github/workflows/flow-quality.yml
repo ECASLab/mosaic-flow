@@ -50,8 +50,28 @@ jobs:
       - name: Validate PyUVM fixture evidence
         run: tests/check_fixture_pyuvm_evidence.sh
 
+      - name: Verify reusable and dedicated coverage sources
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            COVERAGE_QUALIFICATION_SOURCE=pyuvm_open_source \
+            FLOW_DEPENDENCIES_coverage_qualification=pyuvm_open_source \
+            open-coverage
+          grep -Fq '"source": "pyuvm_open_source"' \
+            tests/fixture-module/reports/coverage_qualification/summary.json
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            COVERAGE_QUALIFICATION_SOURCE=dedicated \
+            FLOW_DEPENDENCIES_coverage_qualification= \
+            open-coverage
+          grep -Fq '"source": "dedicated"' \
+            tests/fixture-module/reports/coverage_qualification/summary.json
+
       - name: Verify SystemVerilog assertion failure propagation
         run: tests/test_pyuvm_assertion_failure.sh
+
+      - name: Verify unreachable formal cover failure propagation
+        run: tests/test_coverage_unreachable_formal.sh
 
       - name: Run complete multi-module fixture flow
         run: |
@@ -109,6 +129,7 @@ jobs:
         run: |
           tests/test_multi_module.sh
           tests/test_parameter_profiles.sh
+          tests/test_coverage_qualification.sh
 
       - name: Run containerized release-manifest fixture
         run: FIXTURE_CONTEXT=container tests/test_release_manifest.sh

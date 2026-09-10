@@ -17,6 +17,7 @@ methodology without copying flow scripts or changing module RTL.
 - Optional PyUVM verification with open-source, VCS, and Xcelium backends
 - Single-module and manifest-based multi-module project orchestration
 - Named parameter-profile qualification across elaboration and implementation
+- Declarative HDL and formal coverage qualification with reviewed exclusions
 - Flow selection, statuses, reports, and quality gates
 - Schema-validated release evidence with input hashes and tool identities
 - Pinned open-source tool installers and versions

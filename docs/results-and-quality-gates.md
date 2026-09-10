@@ -79,9 +79,11 @@ the dependency graph and filesystem are temporarily inconsistent.
 - `eqy_equivalence`
 - `verilator_sim`
 - `pyuvm_open_source`
+- `coverage_qualification`
 
 `make open-source` runs these targets and then the gate. PyUVM is disabled by
-default and therefore records `SKIP` unless the module enables it. Once enabled,
+default and therefore records `SKIP` unless the module enables it. Coverage
+qualification is also disabled by default. Once either optional flow is enabled,
 its open-source result must be `PASS`. `openroad` is optional and intentionally
 outside this portable gate.
 

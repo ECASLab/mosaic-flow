@@ -1,0 +1,13 @@
+[options]
+mode cover
+depth 4
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal -sv flow_fixture_unreachable_cover.sv
+prep -top flow_fixture_unreachable_cover
+
+[files]
+verif/formal/flow_fixture_unreachable_cover.sv

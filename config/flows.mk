@@ -11,6 +11,7 @@ MOSAIC_FLOW_IDS := \
 	eqy_equivalence \
 	verilator_sim \
 	pyuvm_open_source \
+	coverage_qualification \
 	openroad \
 	vcs_sim \
 	pyuvm_commercial \
@@ -44,6 +45,8 @@ FLOW_eqy_equivalence ?= enabled
 FLOW_verilator_sim ?= enabled
 # FLOW_pyuvm_open_source: Run PyUVM through Verilator or Icarus when opted in.
 FLOW_pyuvm_open_source ?= disabled
+# FLOW_coverage_qualification: Enforce module-owned HDL and formal coverage policy.
+FLOW_coverage_qualification ?= disabled
 # FLOW_openroad: Run optional PDK-backed physical implementation with OpenROAD.
 FLOW_openroad ?= enabled
 # FLOW_vcs_sim: Run the module-owned SystemVerilog testbench with VCS.
@@ -89,6 +92,10 @@ FLOW_DEPENDENCIES_eqy_equivalence ?= yosys_synthesis
 FLOW_DEPENDENCIES_verilator_sim ?=
 # FLOW_DEPENDENCIES_pyuvm_open_source: PyUVM builds its simulator model itself.
 FLOW_DEPENDENCIES_pyuvm_open_source ?=
+# FLOW_DEPENDENCIES_coverage_qualification: Normal simulation produces the
+# default native coverage source. Override this with pyuvm_open_source when
+# COVERAGE_QUALIFICATION_SOURCE selects PyUVM, or clear it for a dedicated run.
+FLOW_DEPENDENCIES_coverage_qualification ?= verilator_sim
 # FLOW_DEPENDENCIES_openroad: OpenROAD owns its build graph by default.
 FLOW_DEPENDENCIES_openroad ?=
 # FLOW_DEPENDENCIES_vcs_sim: VCS simulation builds from source.

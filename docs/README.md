@@ -20,11 +20,13 @@ maintainers, and contributors to the methodology itself.
    flow states, dependencies, tools, and overrides.
 6. [Flow catalog](flows.md) describes every open-source and commercial flow,
    including inputs, outputs, and upstream documentation.
-7. [Results and quality gates](results-and-quality-gates.md) defines statuses,
+7. [Coverage qualification](coverage-qualification.md) defines HDL thresholds,
+   named coverpoints, reviewed exclusions, and formal reachability.
+8. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, and CI behavior.
-8. [Release evidence](release-evidence.md) defines the manifest schema,
+9. [Release evidence](release-evidence.md) defines the manifest schema,
    acceptance policy, extension points, and release integration.
-9. [Methodology development](development.md) explains how to change, test,
+10. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -47,6 +49,7 @@ maintainers, and contributors to the methodology itself.
 | Select or disable flows | Module `config/flows.mk` |
 | Set design paths and names | Module `config/design.mk` |
 | Understand PyUVM and SVA reuse | [PyUVM, SVA, and coverage](getting-started.md#understand-pyuvm-sva-and-coverage) |
+| Qualify HDL and formal coverage | [Coverage qualification](coverage-qualification.md) |
 | Inspect machine-readable status | Module `reports/<flow-id>/status.txt` |
 | Add a methodology flow | [Methodology development](development.md#adding-a-flow) |
 

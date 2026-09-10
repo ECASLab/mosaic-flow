@@ -105,10 +105,13 @@ The default dependencies represent direct artifact consumption:
 | Flow | Default dependencies | Reason |
 | --- | --- | --- |
 | `eqy_equivalence` | `yosys_synthesis` | EQY reads the Yosys netlist |
+| `coverage_qualification` | `verilator_sim` | Qualification reads normal simulation coverage by default |
 | `synopsys_primetime` | `synopsys_synthesis` | PrimeTime reads the synthesis DDC and SDC |
 | `synopsys_primepower` | `vcs_sim synopsys_synthesis` | PrimePower reads SAIF activity plus synthesis DDC and SDC |
 
-All other default lists are empty. A project may add policy dependencies even
+All other default lists are empty. Select `pyuvm_open_source` as the coverage
+dependency when qualifying PyUVM evidence, or clear the list for a dedicated
+coverage run. A project may add policy dependencies even
 when no file is directly consumed. For example:
 
 ```make
@@ -170,6 +173,8 @@ The shared environment adapter requires these variables for every tool adapter:
 | `PROPERTY_FILELIST` | Shared SystemVerilog property and sequence dependencies |
 | `ASSERTION_FILELIST` | Shared SystemVerilog assertion and bind file list |
 | `COVERAGE_FILELIST` | Shared SystemVerilog coverage model and bind file list |
+| `COVERAGE_QUALIFICATION_POLICY` | Versioned JSON policy for HDL and formal coverage qualification |
+| `COVERAGE_QUALIFICATION_SOURCE` | Existing HDL evidence source or `dedicated` rerun |
 | `CONSTRAINT_DIR` | Directory containing synthesis `timing.sdc` |
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
@@ -217,6 +222,7 @@ Flow-specific inputs are required when their flow is enabled:
 | `PYUVM_RUN_ARGS` | Additional shell-parsed simulator run arguments |
 | `PYUVM_PLUSARGS` | Additional shell-parsed HDL plusargs |
 | `SIM_COVERAGE` | Enable native coverage in normal simulation |
+| `COVERAGE_QUALIFICATION_TOOL` | Shared coverage policy validator, normally not overridden |
 
 ## Release evidence variables
 
@@ -310,6 +316,12 @@ When `COVERAGE_FILELIST` is nonempty, `FORMAL_COVER_CONFIG` is required and
 `open-formal` runs both the proof and cover reachability tasks. `SIM_COVERAGE`
 defaults to `enabled`. Verilator exports `coverage.dat` and `coverage.info`,
 while VCS retains its native `coverage.vdb` database.
+
+Enable `FLOW_coverage_qualification` to turn this collected evidence into a
+policy decision. Configure its source and matching dependency together, then
+declare thresholds, named coverpoints, exclusions, and optional formal
+reachability in `COVERAGE_QUALIFICATION_POLICY`. See
+[Coverage qualification](coverage-qualification.md) for the complete contract.
 
 The current Design Compiler adapter reads
 `$(CONSTRAINT_DIR)/timing.sdc`. Keep `SYNTHESIS_CONSTRAINT_FILE` consistent with

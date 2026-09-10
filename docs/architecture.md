@@ -61,6 +61,7 @@ mosaic-flow/
 |   |-- fixture-multi-module/ Multi-module selection and concurrency fixture
 |   |-- fixture-parameter-profiles/ Parameter elaboration matrix fixture
 |   |-- test_release_manifest.sh Release acceptance-policy fixture
+|   |-- test_coverage_qualification.sh Coverage policy positive and negative fixtures
 |   `-- test_quality_gate.sh Configuration and quality-gate unit tests
 |-- README.md                Repository overview
 `-- VERSION                  Methodology semantic version

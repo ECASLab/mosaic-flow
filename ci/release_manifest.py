@@ -503,6 +503,11 @@ def collect_coverage(module_root: Path, report_dir: Path) -> list[dict[str, str]
         ("pyuvm_open_source", "coverage.info", "systemverilog_native_report"),
         ("pyuvm_open_source", "functional-coverage.json", "pyuvm_functional"),
         ("pyuvm_commercial", "functional-coverage.json", "pyuvm_functional"),
+        (
+            "coverage_qualification",
+            "summary.json",
+            "coverage_qualification_summary",
+        ),
     ]
     entries = []
     for producer, filename, kind in candidates:

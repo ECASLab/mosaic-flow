@@ -33,6 +33,7 @@ portable_flows = {
     "verilator_sim",
     "pyuvm_open_source",
 }
+reported_flows = portable_flows | {"coverage_qualification"}
 elaboration_flows = {
     "verible_lint",
     "verible_format",
@@ -49,7 +50,7 @@ for entry in summary["profiles"]:
     profile = entry["profile"]
     assert entry["parameters"] == expected_parameters[profile]
     expected_pass = elaboration_flows if profile == "elaboration_only" else portable_flows
-    assert set(entry["statuses"]) == portable_flows
+    assert set(entry["statuses"]) == reported_flows
     for flow, status in entry["statuses"].items():
         assert status == ("PASS" if flow in expected_pass else "SKIP"), (
             profile,
