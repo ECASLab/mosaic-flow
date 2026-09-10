@@ -199,6 +199,7 @@ FLOW_symbiyosys_formal := enabled
 FLOW_eqy_equivalence := enabled
 FLOW_verilator_sim := enabled
 FLOW_pyuvm_open_source := disabled
+FLOW_static_intent := disabled
 FLOW_openroad := disabled
 
 FLOW_vcs_sim := enabled

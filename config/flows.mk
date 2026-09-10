@@ -14,6 +14,7 @@ MOSAIC_FLOW_IDS := \
 	coverage_qualification \
 	negative_qualification \
 	four_state_qualification \
+	static_intent \
 	openroad \
 	vcs_sim \
 	pyuvm_commercial \
@@ -53,6 +54,8 @@ FLOW_coverage_qualification ?= disabled
 FLOW_negative_qualification ?= disabled
 # FLOW_four_state_qualification: Detect declared X/Z values with pinned Icarus simulation.
 FLOW_four_state_qualification ?= disabled
+# FLOW_static_intent: Validate portable module-owned SDC and UPF semantics.
+FLOW_static_intent ?= disabled
 # FLOW_openroad: Run optional PDK-backed physical implementation with OpenROAD.
 FLOW_openroad ?= enabled
 # FLOW_vcs_sim: Run the module-owned SystemVerilog testbench with VCS.
@@ -106,6 +109,8 @@ FLOW_DEPENDENCIES_coverage_qualification ?= verilator_sim
 FLOW_DEPENDENCIES_negative_qualification ?=
 # FLOW_DEPENDENCIES_four_state_qualification: Four-state cases compile independently.
 FLOW_DEPENDENCIES_four_state_qualification ?=
+# FLOW_DEPENDENCIES_static_intent: Static intent reads module-owned policy and Tcl only.
+FLOW_DEPENDENCIES_static_intent ?=
 # FLOW_DEPENDENCIES_openroad: OpenROAD owns its build graph by default.
 FLOW_DEPENDENCIES_openroad ?=
 # FLOW_DEPENDENCIES_vcs_sim: VCS simulation builds from source.

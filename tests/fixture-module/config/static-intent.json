@@ -1,0 +1,60 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "synthesis",
+        "path": "constraints/timing.sdc",
+        "kind": "sequential",
+        "expected_ports": {
+          "clock": ["clk_i"],
+          "input_delay": ["rst_ni", "enable_i", "data_i"],
+          "output_delay": ["data_o"]
+        },
+        "clocks": [{"name": "core_clk", "period": 10.0, "port": "clk_i"}],
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_ni"], "to_ports": []}
+        ]
+      },
+      {
+        "name": "physical",
+        "path": "constraints/timing.sdc",
+        "kind": "sequential",
+        "expected_ports": {
+          "clock": ["clk_i"],
+          "input_delay": ["rst_ni", "enable_i", "data_i"],
+          "output_delay": ["data_o"]
+        },
+        "clocks": [{"name": "core_clk", "period": 10.0, "port": "clk_i"}],
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_ni"], "to_ports": []}
+        ]
+      }
+    ],
+    "consistency": [
+      {
+        "profiles": ["synthesis", "physical"],
+        "commands": [
+          "create_clock",
+          "set_clock_uncertainty",
+          "set_input_delay",
+          "set_output_delay",
+          "set_false_path"
+        ]
+      }
+    ]
+  },
+  "upf": {
+    "path": "constraints/power.upf",
+    "top": "flow_fixture",
+    "mode": "always_on",
+    "required": {
+      "power_domains": ["PD_FIXTURE"],
+      "supply_ports": ["VDD", "VSS"],
+      "supply_nets": ["VDD", "VSS"],
+      "supply_connections": ["VDD", "VSS"],
+      "domain_supplies": ["PD_FIXTURE"]
+    },
+    "forbidden_strategies": []
+  }
+}

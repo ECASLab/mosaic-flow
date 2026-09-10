@@ -131,6 +131,7 @@ jobs:
           tests/test_parameter_profiles.sh
           tests/test_coverage_qualification.sh
           tests/test_qualification_campaigns.sh
+          tests/test_static_intent.sh
 
       - name: Run containerized release-manifest fixture
         run: FIXTURE_CONTEXT=container tests/test_release_manifest.sh

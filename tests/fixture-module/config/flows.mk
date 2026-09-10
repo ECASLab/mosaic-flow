@@ -10,6 +10,7 @@ FLOW_pyuvm_open_source := enabled
 FLOW_coverage_qualification := enabled
 FLOW_negative_qualification := enabled
 FLOW_four_state_qualification := enabled
+FLOW_static_intent := enabled
 FLOW_openroad := enabled
 FLOW_vcs_sim := enabled
 FLOW_pyuvm_commercial := disabled

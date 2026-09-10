@@ -26,9 +26,11 @@ maintainers, and contributors to the methodology itself.
    defines declarative fault campaigns, controls, diagnostics, and evidence.
 9. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, and CI behavior.
-10. [Release evidence](release-evidence.md) defines the manifest schema,
+10. [Portable SDC and UPF intent](static-intent.md) defines the declarative
+    constraint and power-intent gate and its signoff boundary.
+11. [Release evidence](release-evidence.md) defines the manifest schema,
    acceptance policy, extension points, and release integration.
-11. [Methodology development](development.md) explains how to change, test,
+12. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -53,6 +55,7 @@ maintainers, and contributors to the methodology itself.
 | Understand PyUVM and SVA reuse | [PyUVM, SVA, and coverage](getting-started.md#understand-pyuvm-sva-and-coverage) |
 | Qualify HDL and formal coverage | [Coverage qualification](coverage-qualification.md) |
 | Qualify known faults and X/Z controls | [Qualification campaigns](qualification-campaigns.md) |
+| Validate portable SDC and UPF intent | `make open-static-intent` |
 | Inspect machine-readable status | Module `reports/<flow-id>/status.txt` |
 | Add a methodology flow | [Methodology development](development.md#adding-a-flow) |
 
@@ -68,6 +71,7 @@ most important implementation entry points are:
 - `ci/module_manifest.py` for module registry validation and matrix generation
 - `ci/parameter_profiles.py` for parameter translation and profile evidence
 - `ci/release_manifest.py` for release evidence generation and validation
+- `ci/static_intent.py` for non-executing SDC and UPF command capture
 - `ci/run_flow.sh` for execution eligibility and status recording
 - `ci/*_quality_gate.sh` for acceptance policy
 - `flows/<flow-name>/` for tool adapters

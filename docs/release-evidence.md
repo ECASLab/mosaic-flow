@@ -86,6 +86,10 @@ constraints, waivers, formal and equivalence configuration, OpenROAD setup,
 CDC and DFT intent, UPF, and PyUVM sources. Every discovered file is recorded
 with a repository-relative path and SHA-256 digest.
 
+When `static_intent` is enabled, the generator reads the module expectation
+file and hashes every SDC and UPF path it selects. It also indexes the separate
+SDC and UPF findings plus the aggregate summary as additional evidence.
+
 Filelists are traversed recursively. The parser accepts source paths,
 `+incdir+`, `+define+`, and nested `-f` or `-F` entries. Missing declared files,
 empty declared directories, paths outside `MODULE_ROOT`, and unsupported
@@ -128,6 +132,10 @@ recorded as independent required canonical flows. Their module-owned campaign
 manifest is hashed as a release input and each aggregate `summary.json` is
 indexed as additional evidence. Four-state releases also capture the resolved
 Icarus and VVP versions.
+
+When enabled, `static_intent` is recorded as an independent required canonical
+flow. Its evidence establishes portable structural intent only and does not
+replace STA or VC LP signoff evidence.
 
 Register another tool version command with JSON:
 

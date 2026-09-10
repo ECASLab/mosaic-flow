@@ -1,0 +1,10 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "upf": {
+    "path": "upf/forbidden-strategy.upf",
+    "top": "intent_fixture",
+    "mode": "always_on",
+    "required": {"power_domains": ["PD_CORE"]},
+    "forbidden_strategies": ["isolation"]
+  }
+}

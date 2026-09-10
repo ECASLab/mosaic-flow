@@ -82,11 +82,14 @@ the dependency graph and filesystem are temporarily inconsistent.
 - `coverage_qualification`
 - `negative_qualification`
 - `four_state_qualification`
+- `static_intent`
 
 `make open-source` runs these targets and then the gate. PyUVM is disabled by
 default and therefore records `SKIP` unless the module enables it. Coverage
 qualification is also disabled by default. Negative-test and four-state
 qualification are likewise disabled by default and independently selectable.
+Static intent validation is disabled by default and becomes required when a
+module enables it.
 Once any optional flow is enabled, its open-source result must be `PASS`.
 `openroad` is optional and intentionally
 outside this portable gate.

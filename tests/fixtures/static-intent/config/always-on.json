@@ -1,0 +1,16 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "upf": {
+    "path": "upf/always-on.upf",
+    "top": "intent_fixture",
+    "mode": "always_on",
+    "required": {
+      "power_domains": ["PD_CORE"],
+      "supply_ports": ["VDD", "VSS"],
+      "supply_nets": ["VDD", "VSS"],
+      "supply_connections": ["VDD", "VSS"],
+      "domain_supplies": ["PD_CORE"]
+    },
+    "forbidden_strategies": []
+  }
+}

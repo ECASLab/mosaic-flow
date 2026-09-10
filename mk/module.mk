@@ -123,6 +123,7 @@ RELEASE_STANDARD_INPUTS := \
 	$(FORMAL_COVERAGE_CONFIG) \
 	$(if $(filter enabled,$(FLOW_coverage_qualification)),$(COVERAGE_QUALIFICATION_POLICY)) \
 	$(if $(filter enabled,$(FLOW_negative_qualification) $(FLOW_four_state_qualification)),$(QUALIFICATION_CAMPAIGN_MANIFEST)) \
+	$(if $(filter enabled,$(FLOW_static_intent)),$(STATIC_INTENT_CONFIG)) \
 	$(EQUIVALENCE_CONFIG) \
 	$(OPENROAD_CONFIG) \
 	$(SYNTHESIS_CONSTRAINT_FILE) \
@@ -152,8 +153,8 @@ export RELEASE_COVERAGE_EVIDENCE_JSON RELEASE_SUPPLEMENTAL_GATES
 export RELEASE_ADDITIONAL_INPUTS RELEASE_ADDITIONAL_EVIDENCE RELEASE_MANIFEST_DIR
 export RELEASE_FILELISTS RELEASE_INPUT_FILES
 
-OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-quality-gate
-OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state
+OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-static-intent open-quality-gate
+OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-static-intent
 
 FLOW_TARGET_verible_lint := open-style-lint
 FLOW_TARGET_verible_format := open-format-check
@@ -167,6 +168,7 @@ FLOW_TARGET_pyuvm_open_source := open-pyuvm
 FLOW_TARGET_coverage_qualification := open-coverage
 FLOW_TARGET_negative_qualification := open-negative
 FLOW_TARGET_four_state_qualification := open-four-state
+FLOW_TARGET_static_intent := open-static-intent
 FLOW_TARGET_openroad := open-physical
 FLOW_TARGET_vcs_sim := synopsys-sim
 FLOW_TARGET_pyuvm_commercial := commercial-pyuvm
@@ -352,6 +354,10 @@ open-negative:
 ## open-four-state Detect declared X/Z controls with pinned Icarus simulation
 open-four-state:
 	@"$(FLOW_RUNNER)" four_state_qualification "$(FLOW_ROOT)/flows/qualification/run.sh" four_state
+
+## open-static-intent Validate portable SDC and UPF intent without EDA licenses
+open-static-intent:
+	@"$(FLOW_RUNNER)" static_intent "$(FLOW_ROOT)/flows/static_intent/run.sh"
 
 ## open-quality-gate Validate all open-source results
 open-quality-gate: $(OPEN_FLOW_TARGETS)

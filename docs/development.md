@@ -221,6 +221,13 @@ The complete fixture additionally compiles and runs an X/Z campaign with the
 pinned Icarus simulator. Both methodology fixtures run in native CI, while the
 tool-independent positive and negative cases also run in the pinned container.
 
+`tests/test_static_intent.sh` covers sequential, combinational, generated-clock,
+reset-synchronizer, always-on, isolation, level-shifting, and retention intent.
+Its negative cases require actionable failures for missing constraints, broad
+exceptions, duplicates, conflicts, profile mismatches, incomplete power states,
+forbidden strategies, and unsupported commands. The same test runs natively and
+inside the pinned container without an EDA license.
+
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by
 `ci/install_ci_tools.sh`.
