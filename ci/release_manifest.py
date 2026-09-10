@@ -397,6 +397,8 @@ def collect_tools(
         ("yosys", {"yosys_synthesis"}, "YOSYS_CMD", "yosys", ["--version"]),
         ("symbiyosys", {"symbiyosys_formal"}, "SBY_CMD", "sby", ["--version"]),
         ("eqy", {"eqy_equivalence"}, "EQY_CMD", "eqy", ["--version"]),
+        ("iverilog", {"four_state_qualification"}, "IVERILOG_CMD", "iverilog", ["-V"]),
+        ("vvp", {"four_state_qualification"}, "VVP_CMD", "vvp", ["-V"]),
     ]
     for name, owned_flows, variable, default, arguments in specifications:
         active_flows = owned_flows & required_flows
@@ -543,6 +545,52 @@ def collect_coverage(module_root: Path, report_dir: Path) -> list[dict[str, str]
     )
 
 
+def collect_qualification_inputs(
+    collector: InputCollector, module_root: Path, required_flows: set[str]
+) -> None:
+    """Hash module-owned collateral for each enabled qualification campaign."""
+    campaign_by_flow = {
+        "negative_qualification": "negative",
+        "four_state_qualification": "four_state",
+    }
+    active = {
+        flow: campaign
+        for flow, campaign in campaign_by_flow.items()
+        if flow in required_flows
+    }
+    if not active:
+        return
+    manifest_path = Path(
+        os.environ.get(
+            "QUALIFICATION_CAMPAIGN_MANIFEST",
+            str(module_root / "config" / "qualification-campaigns.json"),
+        )
+    )
+    if not manifest_path.is_absolute():
+        manifest_path = module_root / manifest_path
+    collector.add(manifest_path, "declared")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ReleaseError(
+            f"Cannot parse qualification campaign inputs from {manifest_path}: {error}"
+        ) from error
+    campaigns = manifest.get("campaigns") if isinstance(manifest, dict) else None
+    if not isinstance(campaigns, dict):
+        raise ReleaseError("Qualification campaign manifest has no campaigns object")
+    for flow, campaign in active.items():
+        selected = campaigns.get(campaign)
+        if not isinstance(selected, dict):
+            raise ReleaseError(f"Required flow {flow} has no {campaign} campaign")
+        inputs = selected.get("inputs", [])
+        if not isinstance(inputs, list) or not all(
+            isinstance(item, str) and item for item in inputs
+        ):
+            raise ReleaseError(f"Campaign {campaign} inputs must be a string array")
+        for declared_input in inputs:
+            collector.add(declared_input, "declared")
+
+
 def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> dict[str, object]:
     """Validate release evidence and compose deterministic and volatile sections."""
     module_root = module_root.resolve()
@@ -596,6 +644,7 @@ def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> d
         collector.add_filelist(path)
 
     flows, required_flows = collect_flows(module_root, report_dir)
+    collect_qualification_inputs(collector, module_root, required_flows)
     gates = collect_supplemental_gates(module_root, report_dir)
     additional_evidence = []
     for declared_path in environment_list("RELEASE_ADDITIONAL_EVIDENCE"):
@@ -603,6 +652,10 @@ def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> d
         if not path.is_absolute():
             path = module_root / path
         additional_evidence.append(evidence_entry(path, module_root))
+    for flow in ("negative_qualification", "four_state_qualification"):
+        summary_path = report_dir / flow / "summary.json"
+        if flow in required_flows and summary_path.is_file():
+            additional_evidence.append(evidence_entry(summary_path, module_root))
 
     parameters = json_environment("PROFILE_PARAMETERS_JSON", {})
     technology_details = json_environment("RELEASE_TECHNOLOGY_METADATA_JSON", {})

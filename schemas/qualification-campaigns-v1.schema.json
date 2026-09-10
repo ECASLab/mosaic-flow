@@ -1,0 +1,151 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://mosaic.dev/schemas/qualification-campaigns-v1.schema.json",
+    "title": "MOSAIC negative-test and four-state qualification campaigns",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema", "campaigns"],
+    "properties": {
+        "schema": {"const": "mosaic-qualification-campaigns-v1"},
+        "campaigns": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "negative": {"$ref": "#/$defs/negativeCampaign"},
+                "four_state": {"$ref": "#/$defs/fourStateCampaign"}
+            },
+            "minProperties": 1
+        }
+    },
+    "$defs": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "diagnostics": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+        },
+        "inputs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+        },
+        "phase": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "expected"],
+            "properties": {
+                "name": {"enum": ["compile", "run"]},
+                "command": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
+                    "minItems": 1
+                },
+                "fixture": {"type": "string", "minLength": 1},
+                "expected": {"enum": ["success", "failure"]},
+                "diagnostic": {"type": "string", "minLength": 1},
+                "failure_class": {
+                    "enum": ["assertion", "elaboration", "equivalence", "mutation", "unknown_control"]
+                },
+                "environment": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"}
+                },
+                "timeout_seconds": {"type": "integer", "minimum": 1}
+            },
+            "oneOf": [
+                {"required": ["command"], "not": {"required": ["fixture"]}},
+                {"required": ["fixture"], "not": {"required": ["command"]}}
+            ]
+        },
+        "caseBase": {
+            "type": "object",
+            "required": ["id", "evidence", "role", "kind", "phases"],
+            "properties": {
+                "id": {"$ref": "#/$defs/name"},
+                "evidence": {"$ref": "#/$defs/name"},
+                "role": {"type": "string"},
+                "kind": {"type": "string", "minLength": 1},
+                "phases": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/phase"},
+                    "minItems": 1,
+                    "maxItems": 2
+                },
+                "positive_control": {"$ref": "#/$defs/name"},
+                "monitor_control": {"$ref": "#/$defs/name"},
+                "injections": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["control", "values"],
+                        "properties": {
+                            "control": {"type": "string", "minLength": 1},
+                            "values": {
+                                "type": "array",
+                                "items": {"enum": ["X", "Z"]},
+                                "minItems": 1,
+                                "uniqueItems": true
+                            }
+                        }
+                    },
+                    "minItems": 1
+                }
+            }
+        },
+        "negativeCase": {
+            "allOf": [
+                {"$ref": "#/$defs/caseBase"},
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "id": {}, "evidence": {}, "kind": {}, "phases": {},
+                        "role": {"enum": ["negative", "positive_control"]},
+                        "positive_control": {}
+                    }
+                }
+            ]
+        },
+        "fourStateCase": {
+            "allOf": [
+                {"$ref": "#/$defs/caseBase"},
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "id": {}, "evidence": {}, "kind": {}, "phases": {},
+                        "role": {"enum": ["unknown_detection", "disabled_monitor_control"]},
+                        "monitor_control": {}, "injections": {}
+                    }
+                }
+            ]
+        },
+        "negativeCampaign": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cases"],
+            "properties": {
+                "inputs": {"$ref": "#/$defs/inputs"},
+                "infrastructure_diagnostics": {"$ref": "#/$defs/diagnostics"},
+                "cases": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/negativeCase"},
+                    "minItems": 1
+                }
+            }
+        },
+        "fourStateCampaign": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["simulator", "cases"],
+            "properties": {
+                "simulator": {"const": "iverilog"},
+                "inputs": {"$ref": "#/$defs/inputs"},
+                "infrastructure_diagnostics": {"$ref": "#/$defs/diagnostics"},
+                "cases": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/fourStateCase"},
+                    "minItems": 1
+                }
+            }
+        }
+    }
+}

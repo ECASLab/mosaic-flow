@@ -62,6 +62,7 @@ mosaic-flow/
 |   |-- fixture-parameter-profiles/ Parameter elaboration matrix fixture
 |   |-- test_release_manifest.sh Release acceptance-policy fixture
 |   |-- test_coverage_qualification.sh Coverage policy positive and negative fixtures
+|   |-- test_qualification_campaigns.sh Negative and four-state gate fixtures
 |   `-- test_quality_gate.sh Configuration and quality-gate unit tests
 |-- README.md                Repository overview
 `-- VERSION                  Methodology semantic version

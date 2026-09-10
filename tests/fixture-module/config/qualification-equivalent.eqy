@@ -1,0 +1,12 @@
+[gold]
+read_verilog -sv rtl/flow_fixture.sv
+prep -top flow_fixture
+
+[gate]
+read_verilog -sv rtl/flow_fixture.sv
+prep -top flow_fixture
+
+[strategy sby]
+use sby
+depth 8
+engine smtbmc bitwuzla

@@ -1,0 +1,192 @@
+{
+    "schema": "mosaic-qualification-campaigns-v1",
+    "campaigns": {
+        "negative": {
+            "inputs": [
+                "config/qualification-equivalent.eqy",
+                "config/qualification-inequivalent.eqy",
+                "verif/mutations/flow_fixture_bad_netlist.v"
+            ],
+            "cases": [
+                {
+                    "id": "verification_positive_control",
+                    "evidence": "verification_positive_control",
+                    "role": "positive_control",
+                    "kind": "positive_control",
+                    "phases": [
+                        {
+                            "name": "run",
+                            "command": [
+                                "{python}",
+                                "{flow_root}/tests/fixtures/qualification_driver.py",
+                                "--diagnostic",
+                                "POSITIVE_CONTROL_PASS",
+                                "--exit-code",
+                                "0"
+                            ],
+                            "expected": "success",
+                            "diagnostic": "POSITIVE_CONTROL_PASS"
+                        }
+                    ]
+                },
+                {
+                    "id": "equivalence_positive_control",
+                    "evidence": "equivalence_positive_control",
+                    "role": "positive_control",
+                    "kind": "equivalence_control",
+                    "phases": [
+                        {
+                            "name": "run",
+                            "command": [
+                                "{eqy}",
+                                "-f",
+                                "-d",
+                                "{case_work_dir}/eqy",
+                                "config/qualification-equivalent.eqy"
+                            ],
+                            "expected": "success",
+                            "diagnostic": "Successfully proved designs equivalent"
+                        }
+                    ]
+                },
+                {
+                    "id": "detected_simulation_mutation",
+                    "evidence": "detected_simulation_mutation",
+                    "role": "negative",
+                    "kind": "simulation_mutation",
+                    "positive_control": "verification_positive_control",
+                    "phases": [
+                        {
+                            "name": "run",
+                            "command": [
+                                "{python}",
+                                "{flow_root}/tests/fixtures/qualification_driver.py",
+                                "--diagnostic",
+                                "ASSERTION_FAILURE_DETECTED",
+                                "--exit-code",
+                                "1"
+                            ],
+                            "expected": "failure",
+                            "diagnostic": "ASSERTION_FAILURE_DETECTED",
+                            "failure_class": "assertion"
+                        }
+                    ]
+                },
+                {
+                    "id": "invalid_parameter_elaboration",
+                    "evidence": "invalid_parameter_elaboration",
+                    "role": "negative",
+                    "kind": "invalid_parameter",
+                    "positive_control": "equivalence_positive_control",
+                    "phases": [
+                        {
+                            "name": "compile",
+                            "command": [
+                                "{python}",
+                                "{flow_root}/tests/fixtures/qualification_driver.py",
+                                "--diagnostic",
+                                "INVALID_PARAMETER_DETECTED",
+                                "--exit-code",
+                                "1"
+                            ],
+                            "expected": "failure",
+                            "diagnostic": "INVALID_PARAMETER_DETECTED",
+                            "failure_class": "elaboration"
+                        }
+                    ]
+                },
+                {
+                    "id": "expected_equivalence_mismatch",
+                    "evidence": "expected_equivalence_mismatch",
+                    "role": "negative",
+                    "kind": "equivalence_mismatch",
+                    "positive_control": "verification_positive_control",
+                    "phases": [
+                        {
+                            "name": "run",
+                            "command": [
+                                "{eqy}",
+                                "-f",
+                                "-d",
+                                "{case_work_dir}/eqy",
+                                "config/qualification-inequivalent.eqy"
+                            ],
+                            "expected": "failure",
+                            "diagnostic": "Successfully proved designs inequivalent|Failed to prove equivalence",
+                            "failure_class": "equivalence"
+                        }
+                    ]
+                }
+            ]
+        },
+        "four_state": {
+            "simulator": "iverilog",
+            "inputs": ["verif/tb/flow_fixture_four_state_tb.sv"],
+            "cases": [
+                {
+                    "id": "disabled_monitor_control",
+                    "evidence": "disabled_monitor_control",
+                    "role": "disabled_monitor_control",
+                    "kind": "stimulus_control",
+                    "injections": [
+                        {"control": "control_i", "values": ["X", "Z"]}
+                    ],
+                    "phases": [
+                        {
+                            "name": "compile",
+                            "command": [
+                                "{iverilog}",
+                                "-g2012",
+                                "-s",
+                                "flow_fixture_four_state_tb",
+                                "-DFLOW_FIXTURE_DISABLE_UNKNOWN_MONITOR",
+                                "-o",
+                                "{case_work_dir}/simulation.vvp",
+                                "verif/tb/flow_fixture_four_state_tb.sv"
+                            ],
+                            "expected": "success"
+                        },
+                        {
+                            "name": "run",
+                            "command": ["{vvp}", "{case_work_dir}/simulation.vvp"],
+                            "expected": "success",
+                            "diagnostic": "UNKNOWN_CONTROL_STIMULUS_REACHED"
+                        }
+                    ]
+                },
+                {
+                    "id": "unknown_control_detection",
+                    "evidence": "unknown_control_detection",
+                    "role": "unknown_detection",
+                    "kind": "control_unknown",
+                    "monitor_control": "disabled_monitor_control",
+                    "injections": [
+                        {"control": "control_i", "values": ["X", "Z"]}
+                    ],
+                    "phases": [
+                        {
+                            "name": "compile",
+                            "command": [
+                                "{iverilog}",
+                                "-g2012",
+                                "-s",
+                                "flow_fixture_four_state_tb",
+                                "-o",
+                                "{case_work_dir}/simulation.vvp",
+                                "verif/tb/flow_fixture_four_state_tb.sv"
+                            ],
+                            "expected": "success"
+                        },
+                        {
+                            "name": "run",
+                            "command": ["{vvp}", "{case_work_dir}/simulation.vvp"],
+                            "expected": "failure",
+                            "diagnostic": "UNKNOWN_CONTROL_XZ_DETECTED",
+                            "failure_class": "unknown_control"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

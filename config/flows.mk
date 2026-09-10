@@ -12,6 +12,8 @@ MOSAIC_FLOW_IDS := \
 	verilator_sim \
 	pyuvm_open_source \
 	coverage_qualification \
+	negative_qualification \
+	four_state_qualification \
 	openroad \
 	vcs_sim \
 	pyuvm_commercial \
@@ -47,6 +49,10 @@ FLOW_verilator_sim ?= enabled
 FLOW_pyuvm_open_source ?= disabled
 # FLOW_coverage_qualification: Enforce module-owned HDL and formal coverage policy.
 FLOW_coverage_qualification ?= disabled
+# FLOW_negative_qualification: Prove declared faults and invalid configurations are detected.
+FLOW_negative_qualification ?= disabled
+# FLOW_four_state_qualification: Detect declared X/Z values with pinned Icarus simulation.
+FLOW_four_state_qualification ?= disabled
 # FLOW_openroad: Run optional PDK-backed physical implementation with OpenROAD.
 FLOW_openroad ?= enabled
 # FLOW_vcs_sim: Run the module-owned SystemVerilog testbench with VCS.
@@ -96,6 +102,10 @@ FLOW_DEPENDENCIES_pyuvm_open_source ?=
 # default native coverage source. Override this with pyuvm_open_source when
 # COVERAGE_QUALIFICATION_SOURCE selects PyUVM, or clear it for a dedicated run.
 FLOW_DEPENDENCIES_coverage_qualification ?= verilator_sim
+# FLOW_DEPENDENCIES_negative_qualification: Campaign cases own their prerequisites.
+FLOW_DEPENDENCIES_negative_qualification ?=
+# FLOW_DEPENDENCIES_four_state_qualification: Four-state cases compile independently.
+FLOW_DEPENDENCIES_four_state_qualification ?=
 # FLOW_DEPENDENCIES_openroad: OpenROAD owns its build graph by default.
 FLOW_DEPENDENCIES_openroad ?=
 # FLOW_DEPENDENCIES_vcs_sim: VCS simulation builds from source.

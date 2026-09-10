@@ -106,6 +106,8 @@ The default dependencies represent direct artifact consumption:
 | --- | --- | --- |
 | `eqy_equivalence` | `yosys_synthesis` | EQY reads the Yosys netlist |
 | `coverage_qualification` | `verilator_sim` | Qualification reads normal simulation coverage by default |
+| `negative_qualification` | None | Cases own their compile and run commands |
+| `four_state_qualification` | None | Cases compile independently with Icarus |
 | `synopsys_primetime` | `synopsys_synthesis` | PrimeTime reads the synthesis DDC and SDC |
 | `synopsys_primepower` | `vcs_sim synopsys_synthesis` | PrimePower reads SAIF activity plus synthesis DDC and SDC |
 
@@ -175,6 +177,7 @@ The shared environment adapter requires these variables for every tool adapter:
 | `COVERAGE_FILELIST` | Shared SystemVerilog coverage model and bind file list |
 | `COVERAGE_QUALIFICATION_POLICY` | Versioned JSON policy for HDL and formal coverage qualification |
 | `COVERAGE_QUALIFICATION_SOURCE` | Existing HDL evidence source or `dedicated` rerun |
+| `QUALIFICATION_CAMPAIGN_MANIFEST` | Versioned negative-test and four-state campaign declarations |
 | `CONSTRAINT_DIR` | Directory containing synthesis `timing.sdc` |
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
@@ -223,6 +226,9 @@ Flow-specific inputs are required when their flow is enabled:
 | `PYUVM_PLUSARGS` | Additional shell-parsed HDL plusargs |
 | `SIM_COVERAGE` | Enable native coverage in normal simulation |
 | `COVERAGE_QUALIFICATION_TOOL` | Shared coverage policy validator, normally not overridden |
+| `QUALIFICATION_CAMPAIGN_TOOL` | Shared campaign validator and runner, normally not overridden |
+| `IVERILOG_CMD` | Icarus compiler used for four-state qualification |
+| `VVP_CMD` | Icarus runtime used for four-state qualification |
 
 ## Release evidence variables
 

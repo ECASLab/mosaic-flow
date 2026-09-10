@@ -27,6 +27,8 @@ SUPPORTED_FLOWS = {
     "eqy_equivalence",
     "verilator_sim",
     "pyuvm_open_source",
+    "negative_qualification",
+    "four_state_qualification",
     "vcs_sim",
     "pyuvm_commercial",
     "synopsys_synthesis",

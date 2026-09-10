@@ -123,6 +123,12 @@ with HDL coverage. When the canonical coverage gate runs, its
 `coverage_qualification/summary.json` is indexed as a separate qualification
 decision alongside the underlying databases.
 
+When enabled, `negative_qualification` and `four_state_qualification` are
+recorded as independent required canonical flows. Their module-owned campaign
+manifest is hashed as a release input and each aggregate `summary.json` is
+indexed as additional evidence. Four-state releases also capture the resolved
+Icarus and VVP versions.
+
 Register another tool version command with JSON:
 
 ```make

@@ -99,7 +99,8 @@ verible_lint              verible_format
 slang_elaboration         verilator_lint
 yosys_synthesis           symbiyosys_formal
 eqy_equivalence           verilator_sim
-pyuvm_open_source         vcs_sim
+pyuvm_open_source         negative_qualification
+four_state_qualification  vcs_sim
 pyuvm_commercial          synopsys_synthesis
 synopsys_primetime        synopsys_primepower
 ```

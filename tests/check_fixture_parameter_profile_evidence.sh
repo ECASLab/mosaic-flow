@@ -33,7 +33,11 @@ portable_flows = {
     "verilator_sim",
     "pyuvm_open_source",
 }
-reported_flows = portable_flows | {"coverage_qualification"}
+reported_flows = portable_flows | {
+    "coverage_qualification",
+    "negative_qualification",
+    "four_state_qualification",
+}
 elaboration_flows = {
     "verible_lint",
     "verible_format",

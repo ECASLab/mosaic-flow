@@ -214,6 +214,13 @@ workflow runs this fixture both natively and in the pinned container job.
 unreachable cover statement through SymbiYosys in the EDA integration job and
 requires the canonical flow to record `FAIL` before restoring passing evidence.
 
+`tests/test_qualification_campaigns.sh` exercises detected and escaped
+mutations, expected inequivalence, unrelated tool failure, detected unknown
+controls, a broken monitor, failed controls, and explicit disabled statuses.
+The complete fixture additionally compiles and runs an X/Z campaign with the
+pinned Icarus simulator. Both methodology fixtures run in native CI, while the
+tool-independent positive and negative cases also run in the pinned container.
+
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by
 `ci/install_ci_tools.sh`.
