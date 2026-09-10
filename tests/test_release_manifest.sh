@@ -19,6 +19,7 @@ mkdir -p \
   "${module_root}/filelists" \
   "${module_root}/reports/verible_lint" \
   "${module_root}/reports/pyuvm_open_source" \
+  "${module_root}/reports/negative_qualification" \
   "${module_root}/reports/qualification" \
   "${module_root}/rtl" \
   "${module_root}/tools" \
@@ -38,8 +39,63 @@ EOF
 cat >"${module_root}/config/flows.mk" <<'EOF'
 FLOW_verible_lint := enabled
 FLOW_pyuvm_open_source := enabled
+FLOW_negative_qualification := enabled
+FLOW_four_state_qualification := disabled
 FLOW_openroad := disabled
 EOF
+cat >"${module_root}/config/qualification-campaigns.json" <<'EOF'
+{
+  "schema": "mosaic-qualification-campaigns-v1",
+  "campaigns": {
+    "negative": {
+      "inputs": ["config/qualification-negative.txt"],
+      "cases": [
+        {
+          "id": "negative_control", "evidence": "negative_control",
+          "role": "positive_control", "kind": "positive_control",
+          "phases": [{"name": "run", "command": ["true"], "expected": "success"}]
+        },
+        {
+          "id": "negative_case", "evidence": "negative_case",
+          "role": "negative", "kind": "simulation_mutation",
+          "positive_control": "negative_control",
+          "phases": [{
+            "name": "run", "command": ["false"], "expected": "failure",
+            "diagnostic": "EXPECTED_FAILURE", "failure_class": "mutation"
+          }]
+        }
+      ]
+    },
+    "four_state": {
+      "simulator": "iverilog",
+      "inputs": ["config/qualification-four-state.txt"],
+      "cases": [
+        {
+          "id": "monitor_control", "evidence": "monitor_control",
+          "role": "disabled_monitor_control", "kind": "stimulus_control",
+          "injections": [{"control": "enable_i", "values": ["X", "Z"]}],
+          "phases": [
+            {"name": "compile", "command": ["{iverilog}", "fixture.sv"], "expected": "success"},
+            {"name": "run", "command": ["{vvp}", "fixture.vvp"], "expected": "success", "diagnostic": "STIMULUS_REACHED"}
+          ]
+        },
+        {
+          "id": "unknown_detection", "evidence": "unknown_detection",
+          "role": "unknown_detection", "kind": "control_unknown",
+          "monitor_control": "monitor_control",
+          "injections": [{"control": "enable_i", "values": ["X", "Z"]}],
+          "phases": [
+            {"name": "compile", "command": ["{iverilog}", "fixture.sv"], "expected": "success"},
+            {"name": "run", "command": ["{vvp}", "fixture.vvp"], "expected": "failure", "diagnostic": "UNKNOWN_CONTROL", "failure_class": "unknown_control"}
+          ]
+        }
+      ]
+    }
+  }
+}
+EOF
+printf 'negative campaign input\n' >"${module_root}/config/qualification-negative.txt"
+printf 'four-state campaign input\n' >"${module_root}/config/qualification-four-state.txt"
 cat >"${module_root}/constraints/timing.sdc" <<'EOF'
 create_clock -name clk -period 10 [get_ports clk]
 EOF
@@ -66,6 +122,7 @@ chmod +x "${module_root}/tools/fake_tool.sh"
 
 printf 'PASS\n' >"${report_dir}/verible_lint/status.txt"
 printf 'PASS\n' >"${report_dir}/pyuvm_open_source/status.txt"
+printf 'PASS\n' >"${report_dir}/negative_qualification/status.txt"
 printf 'PASS\n' >"${report_dir}/qualification/status.txt"
 cat >"${report_dir}/pyuvm_open_source/versions.log" <<EOF
 python=3.12.3
@@ -81,6 +138,8 @@ printf 'native HDL coverage\n' >"${report_dir}/pyuvm_open_source/coverage.info"
 printf '{"covered":1,"total":1}\n' \
   >"${report_dir}/pyuvm_open_source/functional-coverage.json"
 printf '{"review":"complete"}\n' >"${report_dir}/qualification/summary.json"
+printf '{"campaign":"negative","status":"PASS"}\n' \
+  >"${report_dir}/negative_qualification/summary.json"
 
 git -C "${module_root}" init --quiet
 git -C "${module_root}" config user.email fixture@example.invalid
@@ -99,8 +158,8 @@ manifest_environment=(
   "MODULE_ROOT=${module_root}"
   "FLOW_ROOT=${methodology_root}"
   "REPORT_DIR=${report_dir}"
-  "MOSAIC_FLOW_IDS=verible_lint pyuvm_open_source openroad"
-  "DISABLED_FLOWS=openroad"
+  "MOSAIC_FLOW_IDS=verible_lint pyuvm_open_source negative_qualification four_state_qualification openroad"
+  "DISABLED_FLOWS=four_state_qualification openroad"
   "RELEASE_MODULE_NAME=release_fixture"
   "MODULE_REVISION=${module_revision}"
   "METHODOLOGY_REVISION=${methodology_revision}"
@@ -117,6 +176,9 @@ manifest_environment=(
   "RELEASE_ADDITIONAL_EVIDENCE=${report_dir}/qualification/summary.json"
   "VERIBLE_LINT_CMD=${module_root}/tools/fake_tool.sh"
   "PYUVM_PYTHON=${module_root}/tools/fake_tool.sh"
+  "IVERILOG_CMD=${module_root}/tools/fake_tool.sh"
+  "VVP_CMD=${module_root}/tools/fake_tool.sh"
+  "QUALIFICATION_CAMPAIGN_MANIFEST=${module_root}/config/qualification-campaigns.json"
 )
 
 generate_manifest() {
@@ -176,6 +238,8 @@ assert deterministic["technology"] == {
     "name": "fixture-technology",
 }
 assert {flow["id"]: flow["status"] for flow in deterministic["flows"]} == {
+    "four_state_qualification": "SKIP",
+    "negative_qualification": "PASS",
     "openroad": "SKIP",
     "pyuvm_open_source": "PASS",
     "verible_lint": "PASS",
@@ -194,11 +258,19 @@ assert all(not pathlib.Path(item["path"]).is_absolute()
            for item in deterministic["inputs"])
 input_paths = {item["path"] for item in deterministic["inputs"]}
 assert {"config/design.mk", "config/flows.mk", "constraints/timing.sdc",
-        "filelists/rtl.f", "rtl/release_fixture.sv"} <= input_paths
+        "config/qualification-campaigns.json",
+        "config/qualification-negative.txt", "filelists/rtl.f",
+        "rtl/release_fixture.sv"} <= input_paths
+assert "config/qualification-four-state.txt" not in input_paths
 coverage_kinds = {item["kind"] for item in deterministic["evidence"]["coverage"]}
 assert coverage_kinds == {"pyuvm_functional", "systemverilog_native_report"}
-assert deterministic["evidence"]["additional"][0]["path"] == \
-    "reports/qualification/summary.json"
+additional_paths = {
+    item["path"] for item in deterministic["evidence"]["additional"]
+}
+assert additional_paths == {
+    "reports/negative_qualification/summary.json",
+    "reports/qualification/summary.json",
+}
 assert manifest["volatile"]["source_tree"] == {
     "methodology_dirty": False,
     "module_dirty": False,
@@ -216,6 +288,38 @@ first = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 second = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
 assert first["deterministic"] == second["deterministic"]
 PY
+
+independent_output_dir="${report_dir}/release_manifest/four_state_only"
+mkdir -p "${report_dir}/four_state_qualification"
+printf 'SKIP\n' >"${report_dir}/negative_qualification/status.txt"
+printf 'PASS\n' >"${report_dir}/four_state_qualification/status.txt"
+printf '{"campaign":"four_state","status":"PASS"}\n' \
+  >"${report_dir}/four_state_qualification/summary.json"
+generate_manifest "${independent_output_dir}" \
+  DISABLED_FLOWS="negative_qualification openroad" >/dev/null
+python3 - "${independent_output_dir}/manifest.json" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+deterministic = manifest["deterministic"]
+statuses = {flow["id"]: flow["status"] for flow in deterministic["flows"]}
+assert statuses["negative_qualification"] == "SKIP"
+assert statuses["four_state_qualification"] == "PASS"
+input_paths = {item["path"] for item in deterministic["inputs"]}
+assert "config/qualification-four-state.txt" in input_paths
+assert "config/qualification-negative.txt" not in input_paths
+additional_paths = {
+    item["path"] for item in deterministic["evidence"]["additional"]
+}
+assert "reports/four_state_qualification/summary.json" in additional_paths
+assert "reports/negative_qualification/summary.json" not in additional_paths
+tool_names = {tool["name"] for tool in deterministic["tools"]}
+assert {"iverilog", "vvp"} <= tool_names
+PY
+printf 'PASS\n' >"${report_dir}/negative_qualification/status.txt"
+printf 'SKIP\n' >"${report_dir}/four_state_qualification/status.txt"
 
 expect_failure "Cannot inspect methodology source tree" \
   generate_packaged_manifest "${output_dir}"

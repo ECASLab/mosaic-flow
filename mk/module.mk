@@ -122,6 +122,7 @@ RELEASE_STANDARD_INPUTS := \
 	$(FORMAL_COVER_CONFIG) \
 	$(FORMAL_COVERAGE_CONFIG) \
 	$(if $(filter enabled,$(FLOW_coverage_qualification)),$(COVERAGE_QUALIFICATION_POLICY)) \
+	$(if $(filter enabled,$(FLOW_negative_qualification) $(FLOW_four_state_qualification)),$(QUALIFICATION_CAMPAIGN_MANIFEST)) \
 	$(EQUIVALENCE_CONFIG) \
 	$(OPENROAD_CONFIG) \
 	$(SYNTHESIS_CONSTRAINT_FILE) \
@@ -151,8 +152,8 @@ export RELEASE_COVERAGE_EVIDENCE_JSON RELEASE_SUPPLEMENTAL_GATES
 export RELEASE_ADDITIONAL_INPUTS RELEASE_ADDITIONAL_EVIDENCE RELEASE_MANIFEST_DIR
 export RELEASE_FILELISTS RELEASE_INPUT_FILES
 
-OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-quality-gate
-OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage
+OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-quality-gate
+OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state
 
 FLOW_TARGET_verible_lint := open-style-lint
 FLOW_TARGET_verible_format := open-format-check
@@ -164,6 +165,8 @@ FLOW_TARGET_eqy_equivalence := open-equivalence
 FLOW_TARGET_verilator_sim := open-sim
 FLOW_TARGET_pyuvm_open_source := open-pyuvm
 FLOW_TARGET_coverage_qualification := open-coverage
+FLOW_TARGET_negative_qualification := open-negative
+FLOW_TARGET_four_state_qualification := open-four-state
 FLOW_TARGET_openroad := open-physical
 FLOW_TARGET_vcs_sim := synopsys-sim
 FLOW_TARGET_pyuvm_commercial := commercial-pyuvm
@@ -341,6 +344,14 @@ open-pyuvm:
 ## open-coverage Qualify native HDL and optional formal coverage evidence
 open-coverage:
 	@"$(FLOW_RUNNER)" coverage_qualification "$(FLOW_ROOT)/flows/coverage/run.sh"
+
+## open-negative Prove module-owned faults and invalid configurations are detected
+open-negative:
+	@"$(FLOW_RUNNER)" negative_qualification "$(FLOW_ROOT)/flows/qualification/run.sh" negative
+
+## open-four-state Detect declared X/Z controls with pinned Icarus simulation
+open-four-state:
+	@"$(FLOW_RUNNER)" four_state_qualification "$(FLOW_ROOT)/flows/qualification/run.sh" four_state
 
 ## open-quality-gate Validate all open-source results
 open-quality-gate: $(OPEN_FLOW_TARGETS)

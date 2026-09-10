@@ -22,11 +22,13 @@ maintainers, and contributors to the methodology itself.
    including inputs, outputs, and upstream documentation.
 7. [Coverage qualification](coverage-qualification.md) defines HDL thresholds,
    named coverpoints, reviewed exclusions, and formal reachability.
-8. [Results and quality gates](results-and-quality-gates.md) defines statuses,
+8. [Negative-test and four-state qualification](qualification-campaigns.md)
+   defines declarative fault campaigns, controls, diagnostics, and evidence.
+9. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, and CI behavior.
-9. [Release evidence](release-evidence.md) defines the manifest schema,
+10. [Release evidence](release-evidence.md) defines the manifest schema,
    acceptance policy, extension points, and release integration.
-10. [Methodology development](development.md) explains how to change, test,
+11. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -50,6 +52,7 @@ maintainers, and contributors to the methodology itself.
 | Set design paths and names | Module `config/design.mk` |
 | Understand PyUVM and SVA reuse | [PyUVM, SVA, and coverage](getting-started.md#understand-pyuvm-sva-and-coverage) |
 | Qualify HDL and formal coverage | [Coverage qualification](coverage-qualification.md) |
+| Qualify known faults and X/Z controls | [Qualification campaigns](qualification-campaigns.md) |
 | Inspect machine-readable status | Module `reports/<flow-id>/status.txt` |
 | Add a methodology flow | [Methodology development](development.md#adding-a-flow) |
 

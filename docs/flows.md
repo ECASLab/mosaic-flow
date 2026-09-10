@@ -31,6 +31,8 @@ backend mapping.
 | `verilator_sim` | `open-sim` | Verilator | Open-source | None |
 | `pyuvm_open_source` | `open-pyuvm` | PyUVM, cocotb, Verilator or Icarus | Open-source | None |
 | `coverage_qualification` | `open-coverage` | MOSAIC policy validator, Verilator, optional SymbiYosys | Open-source | `verilator_sim` |
+| `negative_qualification` | `open-negative` | MOSAIC declarative campaign runner | Open-source | None |
+| `four_state_qualification` | `open-four-state` | MOSAIC declarative campaign runner, Icarus | Open-source | None |
 | `openroad` | `open-physical` | OpenROAD Flow Scripts | Optional | None |
 | `vcs_sim` | `synopsys-sim` | VCS | Commercial | None |
 | `pyuvm_commercial` | `commercial-pyuvm` | PyUVM, cocotb, VCS or Xcelium | Commercial | None |
@@ -253,6 +255,37 @@ identifies every unmet requirement and is indexed by the release manifest.
 
 See [Coverage qualification](coverage-qualification.md) for the policy schema,
 source selection, formal behavior, limitations, and migration examples.
+
+### Negative-test qualification
+
+- **ID:** `negative_qualification`
+- **Target:** `make open-negative`
+- **Adapter:** [`flows/qualification/run.sh`](../flows/qualification/run.sh)
+- **Inputs:** `QUALIFICATION_CAMPAIGN_MANIFEST` and module-owned fault fixtures
+- **Reports:** aggregate and per-case JSON, status, command, compile, and run evidence
+
+This optional gate proves that declared simulation mutations, assertion faults,
+invalid parameters, and inequivalent candidates are detected for the expected
+reason. Every fault references a passing nominal control. The runner rejects an
+escaped fault and distinguishes unrelated infrastructure failures from expected
+design-check failures.
+
+### Four-state qualification
+
+- **ID:** `four_state_qualification`
+- **Target:** `make open-four-state`
+- **Adapter:** [`flows/qualification/run.sh`](../flows/qualification/run.sh)
+- **Simulator:** pinned Icarus and VVP from OSS CAD Suite
+- **Inputs:** `QUALIFICATION_CAMPAIGN_MANIFEST` and module-owned four-state stimulus
+- **Reports:** aggregate and per-case JSON, status, command, compile, and run evidence
+
+This optional gate injects declared X/Z values into control inputs and requires
+a specific monitor diagnostic. A separate disabled-monitor control proves that
+the illegal stimulus reaches the design without an unrelated failure. It does
+not change the two-state Verilator simulation contract.
+
+See [Negative-test and four-state qualification](qualification-campaigns.md)
+for the manifest schema, case semantics, evidence, and migration guidance.
 
 ### OpenROAD physical implementation
 

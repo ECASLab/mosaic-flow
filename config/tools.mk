@@ -32,6 +32,10 @@ export YOSYS_CMD ?=yosys
 export SBY_CMD ?=sby
 # EQY_CMD: EQY executable used for RTL-to-netlist equivalence.
 export EQY_CMD ?=eqy
+# IVERILOG_CMD: Pinned OSS CAD Suite compiler used by four-state qualification.
+export IVERILOG_CMD ?=iverilog
+# VVP_CMD: Icarus runtime used by four-state qualification cases.
+export VVP_CMD ?=vvp
 # SLANG_CMD: Slang executable used for SystemVerilog elaboration.
 export SLANG_CMD ?=slang
 # VERIBLE_LINT_CMD: Verible executable used for syntax and style linting.
@@ -85,6 +89,10 @@ export COVERAGE_QUALIFICATION_POLICY ?=$(MODULE_ROOT)/config/coverage-policy.jso
 export COVERAGE_QUALIFICATION_SOURCE ?=verilator_sim
 # COVERAGE_QUALIFICATION_TOOL: Shared policy validator and evidence normalizer.
 export COVERAGE_QUALIFICATION_TOOL ?=$(FLOW_ROOT)/ci/coverage_qualification.py
+# QUALIFICATION_CAMPAIGN_MANIFEST: Module-owned negative and four-state case declarations.
+export QUALIFICATION_CAMPAIGN_MANIFEST ?=$(MODULE_ROOT)/config/qualification-campaigns.json
+# QUALIFICATION_CAMPAIGN_TOOL: Shared declarative campaign validator and runner.
+export QUALIFICATION_CAMPAIGN_TOOL ?=$(FLOW_ROOT)/ci/qualification_campaign.py
 
 # PYUVM_PYTHON: Python interpreter from the pinned PyUVM virtual environment.
 export PYUVM_PYTHON ?=$(PYUVM_ROOT)/bin/python

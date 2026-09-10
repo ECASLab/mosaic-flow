@@ -80,11 +80,15 @@ the dependency graph and filesystem are temporarily inconsistent.
 - `verilator_sim`
 - `pyuvm_open_source`
 - `coverage_qualification`
+- `negative_qualification`
+- `four_state_qualification`
 
 `make open-source` runs these targets and then the gate. PyUVM is disabled by
 default and therefore records `SKIP` unless the module enables it. Coverage
-qualification is also disabled by default. Once either optional flow is enabled,
-its open-source result must be `PASS`. `openroad` is optional and intentionally
+qualification is also disabled by default. Negative-test and four-state
+qualification are likewise disabled by default and independently selectable.
+Once any optional flow is enabled, its open-source result must be `PASS`.
+`openroad` is optional and intentionally
 outside this portable gate.
 
 ## Commercial quality gate

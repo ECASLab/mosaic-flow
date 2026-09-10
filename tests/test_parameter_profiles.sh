@@ -198,6 +198,12 @@ check_invalid_manifest \
   '{"schema":"mosaic-parameter-profiles-v1","include":[{"name":"a","parameters":{},"flows":["eqy_equivalence"]}]}' \
   "requires: yosys_synthesis"
 
+printf '%s\n' \
+  '{"schema":"mosaic-parameter-profiles-v1","include":[{"name":"qualification","parameters":{"WIDTH":8},"flows":["negative_qualification","four_state_qualification"]}]}' \
+  >"${temporary_root}/qualification-profiles.json"
+python3 "${profile_tool}" validate \
+  --manifest "${temporary_root}/qualification-profiles.json" >/dev/null
+
 default_profiles="$(
   make -s -C "${flow_root}/tests/fixture-module" FLOW_ROOT="${flow_root}" profile-list
 )"

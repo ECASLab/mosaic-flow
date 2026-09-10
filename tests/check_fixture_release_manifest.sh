@@ -32,6 +32,8 @@ expected_pass = {
     "eqy_equivalence",
     "pyuvm_open_source",
     "coverage_qualification",
+    "negative_qualification",
+    "four_state_qualification",
     "slang_elaboration",
     "symbiyosys_formal",
     "verible_format",
@@ -47,6 +49,8 @@ assert set(flow_statuses) == {
     "pyuvm_commercial",
     "pyuvm_open_source",
     "coverage_qualification",
+    "negative_qualification",
+    "four_state_qualification",
     "sg_cdc",
     "sg_dft",
     "slang_elaboration",
@@ -76,6 +80,7 @@ assert all(
 expected_tools = {
     "cocotb",
     "eqy",
+    "iverilog",
     "python",
     "pyuvm",
     "slang",
@@ -84,6 +89,7 @@ expected_tools = {
     "verible-verilog-lint",
     "verilator",
     "yosys",
+    "vvp",
 }
 tools = deterministic["tools"]
 assert {entry["name"] for entry in tools} == expected_tools
@@ -94,6 +100,9 @@ input_paths = {entry["path"] for entry in deterministic["inputs"]}
 assert {
     "config/design.mk",
     "config/coverage-policy.json",
+    "config/qualification-campaigns.json",
+    "config/qualification-equivalent.eqy",
+    "config/qualification-inequivalent.eqy",
     "config/flows.mk",
     "config/formal.sby",
     "config/formal_cover.sby",
@@ -109,7 +118,9 @@ assert {
     "filelists/rtl.f",
     "filelists/tb.f",
     "rtl/flow_fixture.sv",
+    "verif/mutations/flow_fixture_bad_netlist.v",
     "verif/pyuvm/test_flow_fixture.py",
+    "verif/tb/flow_fixture_four_state_tb.sv",
 } <= input_paths
 assert all(
     re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])
@@ -126,6 +137,11 @@ assert {(entry["producer"], entry["kind"]) for entry in coverage} >= {
     ("pyuvm_open_source", "systemverilog_native_report"),
     ("verilator_sim", "systemverilog_native_report"),
 }
+additional_paths = {entry["path"] for entry in deterministic["evidence"]["additional"]}
+assert {
+    "reports/negative_qualification/summary.json",
+    "reports/four_state_qualification/summary.json",
+} <= additional_paths
 if expect_clean:
     assert manifest["volatile"]["source_tree"] == {
         "methodology_dirty": False,

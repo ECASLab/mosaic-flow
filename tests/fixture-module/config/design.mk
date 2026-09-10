@@ -27,6 +27,7 @@ export FORMAL_CONFIG := $(CURDIR)/config/formal.sby
 export FORMAL_COVER_CONFIG := $(CURDIR)/config/formal_cover.sby
 export COVERAGE_QUALIFICATION_POLICY := $(CURDIR)/config/coverage-policy.json
 export COVERAGE_QUALIFICATION_SOURCE := verilator_sim
+export QUALIFICATION_CAMPAIGN_MANIFEST := $(CURDIR)/config/qualification-campaigns.json
 export EQUIVALENCE_CONFIG := $(CURDIR)/config/equivalence.eqy
 export OPENROAD_CONFIG := $(CURDIR)/config/openroad.mk
 export CONSTRAINT_DIR := $(CURDIR)/constraints
