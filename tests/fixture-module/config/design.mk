@@ -25,6 +25,8 @@ export VERIBLE_RULES_FILE := $(CURDIR)/config/verible.rules
 # Proof and cover reachability use separate SymbiYosys tasks.
 export FORMAL_CONFIG := $(CURDIR)/config/formal.sby
 export FORMAL_COVER_CONFIG := $(CURDIR)/config/formal_cover.sby
+export COVERAGE_QUALIFICATION_POLICY := $(CURDIR)/config/coverage-policy.json
+export COVERAGE_QUALIFICATION_SOURCE := verilator_sim
 export EQUIVALENCE_CONFIG := $(CURDIR)/config/equivalence.eqy
 export OPENROAD_CONFIG := $(CURDIR)/config/openroad.mk
 export CONSTRAINT_DIR := $(CURDIR)/constraints

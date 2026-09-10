@@ -30,6 +30,7 @@ backend mapping.
 | `eqy_equivalence` | `open-equivalence` | EQY | Open-source | `yosys_synthesis` |
 | `verilator_sim` | `open-sim` | Verilator | Open-source | None |
 | `pyuvm_open_source` | `open-pyuvm` | PyUVM, cocotb, Verilator or Icarus | Open-source | None |
+| `coverage_qualification` | `open-coverage` | MOSAIC policy validator, Verilator, optional SymbiYosys | Open-source | `verilator_sim` |
 | `openroad` | `open-physical` | OpenROAD Flow Scripts | Optional | None |
 | `vcs_sim` | `synopsys-sim` | VCS | Commercial | None |
 | `pyuvm_commercial` | `commercial-pyuvm` | PyUVM, cocotb, VCS or Xcelium | Commercial | None |
@@ -232,6 +233,26 @@ Verilator remains the portable default.
 
 More information: [PyUVM](https://github.com/pyuvm/pyuvm) and
 [cocotb simulator support](https://docs.cocotb.org/en/stable/simulator_support.html).
+
+### Coverage qualification
+
+- **ID:** `coverage_qualification`
+- **Target:** `make open-coverage`
+- **Adapter:** [`flows/coverage/run.sh`](../flows/coverage/run.sh)
+- **Inputs:** `COVERAGE_QUALIFICATION_POLICY`, native simulator coverage, and
+  optional `FORMAL_COVER_CONFIG`
+- **Reports:** `reports/coverage_qualification/summary.json`, `status.txt`, and
+  an optional `formal.log`
+- **Default dependency:** `verilator_sim`
+
+This optional gate applies independent line, branch, toggle, and user coverage
+thresholds, minimum hits for named SystemVerilog coverpoints, and validated
+reviewed exclusions. It can consume existing Verilator simulation or PyUVM HDL
+coverage, or request a dedicated Verilator rerun. Its machine-readable summary
+identifies every unmet requirement and is indexed by the release manifest.
+
+See [Coverage qualification](coverage-qualification.md) for the policy schema,
+source selection, formal behavior, limitations, and migration examples.
 
 ### OpenROAD physical implementation
 

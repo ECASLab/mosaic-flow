@@ -39,6 +39,7 @@ Complete portable fixture integration:
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
 tests/test_release_manifest.sh
+tests/test_coverage_qualification.sh
 ```
 
 Review `tests/fixture-module/reports/` when integration fails. Do not use the
@@ -204,6 +205,14 @@ changes.
 after real tool execution. It requires every canonical flow decision, portable
 tool identity, representative design input, both coverage classes, and the
 human-readable summary to be present in the generated release artifact.
+
+`tests/test_coverage_qualification.sh` exercises complete and deficient HDL
+evidence, malformed requirements, valid and stale exclusions, missing named
+coverpoints, formal reachability failure, and explicit flow statuses. The
+workflow runs this fixture both natively and in the pinned container job.
+`tests/test_coverage_unreachable_formal.sh` additionally runs a deliberately
+unreachable cover statement through SymbiYosys in the EDA integration job and
+requires the canonical flow to record `FAIL` before restoring passing evidence.
 
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by

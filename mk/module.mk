@@ -121,6 +121,7 @@ RELEASE_STANDARD_INPUTS := \
 	$(FORMAL_CONFIG) \
 	$(FORMAL_COVER_CONFIG) \
 	$(FORMAL_COVERAGE_CONFIG) \
+	$(if $(filter enabled,$(FLOW_coverage_qualification)),$(COVERAGE_QUALIFICATION_POLICY)) \
 	$(EQUIVALENCE_CONFIG) \
 	$(OPENROAD_CONFIG) \
 	$(SYNTHESIS_CONSTRAINT_FILE) \
@@ -150,8 +151,8 @@ export RELEASE_COVERAGE_EVIDENCE_JSON RELEASE_SUPPLEMENTAL_GATES
 export RELEASE_ADDITIONAL_INPUTS RELEASE_ADDITIONAL_EVIDENCE RELEASE_MANIFEST_DIR
 export RELEASE_FILELISTS RELEASE_INPUT_FILES
 
-OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-quality-gate
-OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm
+OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-quality-gate
+OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage
 
 FLOW_TARGET_verible_lint := open-style-lint
 FLOW_TARGET_verible_format := open-format-check
@@ -162,6 +163,7 @@ FLOW_TARGET_symbiyosys_formal := open-formal
 FLOW_TARGET_eqy_equivalence := open-equivalence
 FLOW_TARGET_verilator_sim := open-sim
 FLOW_TARGET_pyuvm_open_source := open-pyuvm
+FLOW_TARGET_coverage_qualification := open-coverage
 FLOW_TARGET_openroad := open-physical
 FLOW_TARGET_vcs_sim := synopsys-sim
 FLOW_TARGET_pyuvm_commercial := commercial-pyuvm
@@ -335,6 +337,10 @@ open-sim:
 ## open-pyuvm   Run an enabled PyUVM test with the selected open-source simulator
 open-pyuvm:
 	@PYUVM_SIMULATOR="$(PYUVM_OPEN_SIMULATOR)" "$(FLOW_RUNNER)" pyuvm_open_source "$(FLOW_ROOT)/flows/pyuvm/run.sh" pyuvm_open_source
+
+## open-coverage Qualify native HDL and optional formal coverage evidence
+open-coverage:
+	@"$(FLOW_RUNNER)" coverage_qualification "$(FLOW_ROOT)/flows/coverage/run.sh"
 
 ## open-quality-gate Validate all open-source results
 open-quality-gate: $(OPEN_FLOW_TARGETS)

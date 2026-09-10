@@ -78,6 +78,13 @@ export FORMAL_COVER_CONFIG ?=
 export SIM_COVERAGE ?=enabled
 # VERILATOR_COVERAGE_CMD: Utility used to export coverage.dat as coverage.info.
 export VERILATOR_COVERAGE_CMD ?=verilator_coverage
+# COVERAGE_QUALIFICATION_POLICY: Module-owned declarative coverage requirements.
+export COVERAGE_QUALIFICATION_POLICY ?=$(MODULE_ROOT)/config/coverage-policy.json
+# COVERAGE_QUALIFICATION_SOURCE: Existing evidence producer or dedicated rerun.
+# Accepted values are verilator_sim, pyuvm_open_source, and dedicated.
+export COVERAGE_QUALIFICATION_SOURCE ?=verilator_sim
+# COVERAGE_QUALIFICATION_TOOL: Shared policy validator and evidence normalizer.
+export COVERAGE_QUALIFICATION_TOOL ?=$(FLOW_ROOT)/ci/coverage_qualification.py
 
 # PYUVM_PYTHON: Python interpreter from the pinned PyUVM virtual environment.
 export PYUVM_PYTHON ?=$(PYUVM_ROOT)/bin/python

@@ -19,7 +19,9 @@ actionlint "${workflow_files[@]}"
 python3 -m py_compile ci/module_manifest.py
 python3 -m py_compile ci/parameter_profiles.py
 python3 -m py_compile ci/release_manifest.py
+python3 -m py_compile ci/coverage_qualification.py
 python3 -m json.tool schemas/release-evidence-v1.schema.json >/dev/null
+python3 -m json.tool schemas/coverage-policy-v1.schema.json >/dev/null
 
 if ! grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' VERSION; then
   echo "VERSION must contain a semantic version such as 1.2.3" >&2
@@ -76,4 +78,5 @@ tests/test_quality_gate.sh
 tests/test_multi_module.sh
 tests/test_parameter_profiles.sh
 tests/test_release_manifest.sh
+tests/test_coverage_qualification.sh
 echo "mosaic-flow static quality checks passed"

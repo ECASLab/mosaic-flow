@@ -31,6 +31,7 @@ assert re.fullmatch(r"[0-9a-f]{40}", identity["methodology_revision"])
 expected_pass = {
     "eqy_equivalence",
     "pyuvm_open_source",
+    "coverage_qualification",
     "slang_elaboration",
     "symbiyosys_formal",
     "verible_format",
@@ -45,6 +46,7 @@ assert set(flow_statuses) == {
     "openroad",
     "pyuvm_commercial",
     "pyuvm_open_source",
+    "coverage_qualification",
     "sg_cdc",
     "sg_dft",
     "slang_elaboration",
@@ -91,6 +93,7 @@ assert all(entry["source"]["sha256"] for entry in tools if "source" in entry)
 input_paths = {entry["path"] for entry in deterministic["inputs"]}
 assert {
     "config/design.mk",
+    "config/coverage-policy.json",
     "config/flows.mk",
     "config/formal.sby",
     "config/formal_cover.sby",
@@ -118,6 +121,7 @@ assert not any(
 
 coverage = deterministic["evidence"]["coverage"]
 assert {(entry["producer"], entry["kind"]) for entry in coverage} >= {
+    ("coverage_qualification", "coverage_qualification_summary"),
     ("pyuvm_open_source", "pyuvm_functional"),
     ("pyuvm_open_source", "systemverilog_native_report"),
     ("verilator_sim", "systemverilog_native_report"),

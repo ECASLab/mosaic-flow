@@ -11,8 +11,8 @@ case "${SIMULATOR:-}" in
     ;;
 esac
 
-flow_report_dir="${REPORT_DIR}/${flow_name}"
-flow_work_dir="${WORK_DIR}/${flow_name}"
+flow_report_dir="${MOSAIC_SIM_REPORT_DIR:-${REPORT_DIR}/${flow_name}}"
+flow_work_dir="${MOSAIC_SIM_WORK_DIR:-${WORK_DIR}/${flow_name}}"
 mkdir -p "${flow_report_dir}" "${flow_work_dir}"
 printf 'FAIL\n' > "${flow_report_dir}/status.txt"
 
@@ -30,20 +30,25 @@ fi
 
 coverage_filelist_args=()
 coverage_enabled=0
+coverage_request=disabled
 if [[ -n "${COVERAGE_FILELIST:-}" ]]; then
   coverage_filelist_args=(-f "${COVERAGE_FILELIST}")
-  case "${SIM_COVERAGE:-enabled}" in
-    enabled)
-      coverage_enabled=1
-      ;;
-    disabled)
-      ;;
-    *)
-      echo "SIM_COVERAGE must be enabled or disabled" >&2
-      exit 2
-      ;;
-  esac
+  coverage_request="${SIM_COVERAGE:-enabled}"
 fi
+if [[ -n "${MOSAIC_SIM_FORCE_COVERAGE:-}" ]]; then
+  coverage_request="${MOSAIC_SIM_FORCE_COVERAGE}"
+fi
+case "${coverage_request}" in
+  enabled)
+    coverage_enabled=1
+    ;;
+  disabled)
+    ;;
+  *)
+    echo "SIM_COVERAGE must be enabled or disabled" >&2
+    exit 2
+    ;;
+esac
 
 case "${SIMULATOR}" in
   vcs)

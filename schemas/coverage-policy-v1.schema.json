@@ -1,0 +1,71 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://mosaic.dev/schemas/coverage-policy-v1.schema.json",
+    "title": "MOSAIC coverage qualification policy",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema", "thresholds", "coverpoints", "exclusions", "formal"],
+    "properties": {
+        "schema": {"const": "mosaic-coverage-policy-v1"},
+        "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "include": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+                "exclude": {"type": "array", "items": {"type": "string", "minLength": 1}}
+            }
+        },
+        "thresholds": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "line": {"type": "number", "minimum": 0, "maximum": 100},
+                "branch": {"type": "number", "minimum": 0, "maximum": 100},
+                "toggle": {"type": "number", "minimum": 0, "maximum": 100},
+                "user": {"type": "number", "minimum": 0, "maximum": 100}
+            }
+        },
+        "coverpoints": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "minimum_hits"],
+                "properties": {
+                    "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_$]*$"},
+                    "minimum_hits": {"type": "integer", "minimum": 1}
+                }
+            }
+        },
+        "exclusions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["source", "metric", "reason", "owner", "scope"],
+                "properties": {
+                    "source": {"type": "string", "minLength": 1},
+                    "metric": {"enum": ["line", "branch", "toggle", "user"]},
+                    "reason": {"type": "string", "minLength": 1},
+                    "owner": {"type": "string", "minLength": 1},
+                    "scope": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "line_start": {"type": "integer", "minimum": 1},
+                            "line_end": {"type": "integer", "minimum": 1},
+                            "name": {"type": "string", "minLength": 1}
+                        },
+                        "minProperties": 1
+                    }
+                }
+            }
+        },
+        "formal": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["required"],
+            "properties": {"required": {"type": "boolean"}}
+        }
+    }
+}

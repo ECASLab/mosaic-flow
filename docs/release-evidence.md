@@ -119,7 +119,9 @@ When PyUVM is enabled, `versions.log` supplies separate Python, PyUVM, cocotb,
 and simulator records. The version log itself is hashed. Native SystemVerilog
 coverage databases and reports are indexed separately from
 `functional-coverage.json`, so Python functional coverage is never confused
-with HDL coverage.
+with HDL coverage. When the canonical coverage gate runs, its
+`coverage_qualification/summary.json` is indexed as a separate qualification
+decision alongside the underlying databases.
 
 Register another tool version command with JSON:
 
