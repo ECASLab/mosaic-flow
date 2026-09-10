@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecaslab.github.io/mosaic-flow/schemas/release-evidence-v1.schema.json",
+  "title": "MOSAIC release evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "deterministic", "volatile"],
+  "properties": {
+    "schema": {
+      "const": "mosaic-release-evidence-v1"
+    },
+    "deterministic": {
+      "$ref": "#/$defs/deterministic"
+    },
+    "volatile": {
+      "$ref": "#/$defs/volatile"
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hashRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "profile",
+        "module_revision",
+        "methodology_revision",
+        "methodology_version",
+        "execution_context"
+      ],
+      "properties": {
+        "module": {
+          "$ref": "#/$defs/name"
+        },
+        "profile": {
+          "$ref": "#/$defs/name"
+        },
+        "module_revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "methodology_revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "methodology_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_context": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "technology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "details"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "policy", "status", "status_evidence"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "policy": {
+          "enum": ["required", "approved_skip"]
+        },
+        "status": {
+          "enum": ["PASS", "SKIP"]
+        },
+        "status_evidence": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/hashRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "const": "required"
+              },
+              "status_evidence": {
+                "$ref": "#/$defs/hashRecord"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SKIP"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "const": "approved_skip"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "supplementalGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "status_evidence"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "status": {
+          "const": "PASS"
+        },
+        "status_evidence": {
+          "$ref": "#/$defs/hashRecord"
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "context", "command", "flows", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "$ref": "#/$defs/name"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "flows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true
+        },
+        "source": {
+          "$ref": "#/$defs/hashRecord"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "roles", "sha256"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["declared", "filelist", "include", "source"]
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "producer", "path", "sha256"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "deterministic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "parameters",
+        "technology",
+        "flows",
+        "supplemental_gates",
+        "tools",
+        "inputs",
+        "evidence",
+        "metadata"
+      ],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "technology": {
+          "$ref": "#/$defs/technology"
+        },
+        "flows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/flow"
+          }
+        },
+        "supplemental_gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/supplementalGate"
+          }
+        },
+        "tools": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tool"
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["additional", "coverage"],
+          "properties": {
+            "additional": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/hashRecord"
+              }
+            },
+            "coverage": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/coverage"
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "toolPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "context", "path"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "$ref": "#/$defs/name"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "volatile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated_at", "source_tree", "execution"],
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_tree": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["module_dirty", "methodology_dirty"],
+          "properties": {
+            "module_dirty": {
+              "type": "boolean"
+            },
+            "methodology_dirty": {
+              "type": "boolean"
+            }
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["context", "host", "tool_paths", "metadata"],
+          "properties": {
+            "context": {
+              "$ref": "#/$defs/name"
+            },
+            "host": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["machine", "platform", "python_executable"],
+              "properties": {
+                "machine": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "platform": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "python_executable": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "tool_paths": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/toolPath"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

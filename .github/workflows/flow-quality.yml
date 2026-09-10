@@ -66,6 +66,15 @@ jobs:
       - name: Validate parameter-profile fixture evidence
         run: tests/check_fixture_parameter_profile_evidence.sh
 
+      - name: Generate release evidence for the complete fixture
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            DISABLED_FLOWS="openroad vcs_sim pyuvm_commercial vc_lint vc_cdc sg_cdc sg_dft vc_lp synopsys_synthesis synopsys_primetime synopsys_primepower" \
+            MODULE_REVISION="${GITHUB_SHA}" \
+            METHODOLOGY_REVISION="${GITHUB_SHA}" \
+            release-manifest release-manifest-validate
+
       - name: Upload fixture reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,3 +106,6 @@ jobs:
         run: |
           tests/test_multi_module.sh
           tests/test_parameter_profiles.sh
+
+      - name: Run containerized release-manifest fixture
+        run: FIXTURE_CONTEXT=container tests/test_release_manifest.sh

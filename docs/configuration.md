@@ -218,6 +218,37 @@ Flow-specific inputs are required when their flow is enabled:
 | `PYUVM_PLUSARGS` | Additional shell-parsed HDL plusargs |
 | `SIM_COVERAGE` | Enable native coverage in normal simulation |
 
+## Release evidence variables
+
+The shared `release-manifest` target derives its standard input set from the
+design, flow, filelist, constraint, waiver, formal, physical, and power-intent
+variables above. These variables extend or qualify the release record:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `RELEASE_MODULE_NAME` | `MODULE` or `DESIGN_TOP` | Stable module identity |
+| `MODULE_REVISION` | Empty | Explicit 40-digit module commit, required in CI |
+| `METHODOLOGY_REVISION` | Empty | Explicit 40-digit `mosaic-flow` commit, required in CI |
+| `RELEASE_EXECUTION_CONTEXT` | `native` | Context label and output namespace |
+| `RELEASE_ALLOW_DIRTY` | `disabled` | Permit and record a dirty tree for local diagnostics |
+| `RELEASE_MODULE_DIRTY` | Empty | Explicit packaged-module dirty-state attestation |
+| `RELEASE_METHODOLOGY_DIRTY` | Empty | Explicit packaged-methodology dirty-state attestation |
+| `RELEASE_TECHNOLOGY` | `technology-independent` | Technology context name |
+| `RELEASE_TECHNOLOGY_METADATA_JSON` | `{}` | PDK, library, corner, or technology details |
+| `RELEASE_METADATA_JSON` | `{}` | Deterministic module-owned annotations |
+| `RELEASE_EXECUTION_METADATA_JSON` | `{}` | Volatile runner or container annotations |
+| `RELEASE_SUPPLEMENTAL_GATES` | Empty | Required module-owned status IDs |
+| `RELEASE_ADDITIONAL_INPUTS` | Empty | Extra required files or directories to hash |
+| `RELEASE_ADDITIONAL_EVIDENCE` | Empty | Extra generated files to index and hash |
+| `RELEASE_ADDITIONAL_TOOLS_JSON` | `[]` | Extra tool version commands and associated flows |
+| `RELEASE_COVERAGE_EVIDENCE_JSON` | `[]` | Extra coverage kind, producer, and path records |
+| `RELEASE_MANIFEST_DIR` | `REPORT_DIR/release_manifest/<context>` | Manifest output directory |
+
+`RELEASE_INPUT_FILES` and `RELEASE_FILELISTS` are exported derived lists used
+by the generator. Consumers should extend `RELEASE_ADDITIONAL_INPUTS` instead
+of replacing these implementation variables. The JSON formats and release
+policy are documented in [Release evidence](release-evidence.md).
+
 PyUVM is opt-in. A module enables its portable and commercial policies
 independently:
 

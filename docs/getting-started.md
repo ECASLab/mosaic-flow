@@ -228,6 +228,23 @@ Check the resolved policy before running tools:
 make flow-config-check
 ```
 
+## Generate release evidence
+
+After every enabled flow and module-owned supplemental gate has passed, create
+one indexed qualification record:
+
+```sh
+make \
+  MODULE_REVISION="$(git rev-parse HEAD)" \
+  METHODOLOGY_REVISION="$(git -C mosaic-flow rev-parse HEAD)" \
+  release-manifest release-manifest-validate
+```
+
+The output is written below `reports/release_manifest/native/`. Configure
+technology details, extra inputs, and supplemental gates in `config/design.mk`.
+See [Release evidence](release-evidence.md) before connecting the target to CI
+or a module release checklist.
+
 ## Run the first portable checks
 
 List the available targets and prepare the pinned tool cache:

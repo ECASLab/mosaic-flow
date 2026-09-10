@@ -50,6 +50,7 @@ mosaic-flow/
 |   |-- tool-versions.env    Pinned downloadable tool versions and checksums
 |   `-- tools.mk             Executable names, cache roots, and PATH setup
 |-- docs/                    User and maintainer documentation
+|-- schemas/                 Versioned machine-readable evidence contracts
 |-- flows/
 |   |-- common/              Environment validation and status helper
 |   |-- <tool-or-stage>/     Shared shell and Tcl adapters
@@ -59,6 +60,7 @@ mosaic-flow/
 |   |-- fixture-module/      Minimal independent consumer used by CI
 |   |-- fixture-multi-module/ Multi-module selection and concurrency fixture
 |   |-- fixture-parameter-profiles/ Parameter elaboration matrix fixture
+|   |-- test_release_manifest.sh Release acceptance-policy fixture
 |   `-- test_quality_gate.sh Configuration and quality-gate unit tests
 |-- README.md                Repository overview
 `-- VERSION                  Methodology semantic version
@@ -142,6 +144,8 @@ Every flow target follows the same control path:
 7. The adapter writes logs and a final status below `reports/<flow-id>/`.
 8. An aggregate gate verifies that every required flow has the exact expected
    status for the resolved project policy.
+9. The release-manifest target validates and indexes canonical and supplemental
+   statuses, tool versions, inputs, and compact evidence.
 
 Make prerequisites prevent normal out-of-order execution. The report check is a
 second boundary that protects direct script invocation, stale build graphs, and
