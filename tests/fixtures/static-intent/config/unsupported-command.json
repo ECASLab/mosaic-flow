@@ -1,0 +1,12 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "unsupported",
+        "path": "sdc/unsupported-command.sdc",
+        "kind": "sequential"
+      }
+    ]
+  }
+}

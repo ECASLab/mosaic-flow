@@ -591,6 +591,46 @@ def collect_qualification_inputs(
             collector.add(declared_input, "declared")
 
 
+def collect_static_intent_inputs(
+    collector: InputCollector, module_root: Path, required_flows: set[str]
+) -> None:
+    """Hash the expectation file and every SDC or UPF path it selects."""
+    if "static_intent" not in required_flows:
+        return
+    config_path = Path(
+        os.environ.get(
+            "STATIC_INTENT_CONFIG",
+            str(module_root / "config" / "static-intent.json"),
+        )
+    )
+    if not config_path.is_absolute():
+        config_path = module_root / config_path
+    collector.add(config_path, "declared")
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ReleaseError(
+            f"Cannot parse static-intent inputs from {config_path}: {error}"
+        ) from error
+    if not isinstance(config, dict):
+        raise ReleaseError("Static-intent configuration root must be an object")
+    sdc = config.get("sdc", {})
+    if not isinstance(sdc, dict):
+        raise ReleaseError("Static-intent sdc section must be an object")
+    profiles = sdc.get("profiles", [])
+    if not isinstance(profiles, list):
+        raise ReleaseError("Static-intent SDC profiles must be an array")
+    for index, profile in enumerate(profiles):
+        if not isinstance(profile, dict) or not isinstance(profile.get("path"), str):
+            raise ReleaseError(f"Static-intent SDC profile {index} has no path")
+        collector.add(profile["path"], "declared")
+    upf = config.get("upf")
+    if upf is not None:
+        if not isinstance(upf, dict) or not isinstance(upf.get("path"), str):
+            raise ReleaseError("Static-intent UPF section has no path")
+        collector.add(upf["path"], "declared")
+
+
 def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> dict[str, object]:
     """Validate release evidence and compose deterministic and volatile sections."""
     module_root = module_root.resolve()
@@ -645,6 +685,7 @@ def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> d
 
     flows, required_flows = collect_flows(module_root, report_dir)
     collect_qualification_inputs(collector, module_root, required_flows)
+    collect_static_intent_inputs(collector, module_root, required_flows)
     gates = collect_supplemental_gates(module_root, report_dir)
     additional_evidence = []
     for declared_path in environment_list("RELEASE_ADDITIONAL_EVIDENCE"):
@@ -656,6 +697,11 @@ def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> d
         summary_path = report_dir / flow / "summary.json"
         if flow in required_flows and summary_path.is_file():
             additional_evidence.append(evidence_entry(summary_path, module_root))
+    if "static_intent" in required_flows:
+        for filename in ("sdc-findings.json", "upf-findings.json", "summary.json"):
+            additional_evidence.append(
+                evidence_entry(report_dir / "static_intent" / filename, module_root)
+            )
 
     parameters = json_environment("PROFILE_PARAMETERS_JSON", {})
     technology_details = json_environment("RELEASE_TECHNOLOGY_METADATA_JSON", {})

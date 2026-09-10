@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecaslab.github.io/mosaic-flow/schemas/static-intent-v1.schema.json",
+  "title": "MOSAIC portable static-intent expectations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema"],
+  "anyOf": [
+    {"required": ["sdc"]},
+    {"required": ["upf"]}
+  ],
+  "properties": {
+    "schema": {"const": "mosaic-static-intent-v1"},
+    "sdc": {"$ref": "#/$defs/sdc"},
+    "upf": {"$ref": "#/$defs/upf"}
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "stringArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expectedPorts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clock": {"$ref": "#/$defs/stringArray"},
+        "input_delay": {"$ref": "#/$defs/stringArray"},
+        "output_delay": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "period", "port"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "period": {"type": "number", "exclusiveMinimum": 0},
+        "port": {"$ref": "#/$defs/name"}
+      }
+    },
+    "generatedClock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source_port", "output_port", "combinational"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "source_port": {"$ref": "#/$defs/name"},
+        "output_port": {"$ref": "#/$defs/name"},
+        "combinational": {"type": "boolean"}
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "from_ports", "to_ports"],
+      "properties": {
+        "command": {"const": "set_false_path"},
+        "from_ports": {"$ref": "#/$defs/stringArray"},
+        "to_ports": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "sdcProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "kind"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "kind": {"enum": ["sequential", "combinational", "clock_gating", "reset_synchronizer"]},
+        "expected_ports": {"$ref": "#/$defs/expectedPorts"},
+        "clocks": {"type": "array", "items": {"$ref": "#/$defs/clock"}},
+        "generated_clocks": {"type": "array", "items": {"$ref": "#/$defs/generatedClock"}},
+        "intentional_exceptions": {"type": "array", "items": {"$ref": "#/$defs/exception"}},
+        "forbidden_commands": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profiles", "commands"],
+      "properties": {
+        "profiles": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/name"}},
+        "commands": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "sdc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profiles"],
+      "properties": {
+        "profiles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sdcProfile"}},
+        "consistency": {"type": "array", "items": {"$ref": "#/$defs/consistency"}}
+      }
+    },
+    "upfRequired": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "power_domains": {"$ref": "#/$defs/stringArray"},
+        "supply_ports": {"$ref": "#/$defs/stringArray"},
+        "supply_nets": {"$ref": "#/$defs/stringArray"},
+        "supply_connections": {"$ref": "#/$defs/stringArray"},
+        "domain_supplies": {"$ref": "#/$defs/stringArray"},
+        "port_states": {"$ref": "#/$defs/stringArray"},
+        "power_state_tables": {"$ref": "#/$defs/stringArray"},
+        "power_states": {"$ref": "#/$defs/stringArray"},
+        "port_attribute_ports": {"$ref": "#/$defs/stringArray"},
+        "isolation": {"$ref": "#/$defs/stringArray"},
+        "level_shifting": {"$ref": "#/$defs/stringArray"},
+        "retention": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "upf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "top", "mode", "required", "forbidden_strategies"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "top": {"$ref": "#/$defs/name"},
+        "mode": {"enum": ["always_on", "boundary"]},
+        "required": {"$ref": "#/$defs/upfRequired"},
+        "forbidden_strategies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["isolation", "level_shifting", "retention", "power_switch"]}
+        }
+      }
+    }
+  }
+}

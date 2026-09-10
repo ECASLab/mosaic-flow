@@ -93,6 +93,10 @@ export COVERAGE_QUALIFICATION_TOOL ?=$(FLOW_ROOT)/ci/coverage_qualification.py
 export QUALIFICATION_CAMPAIGN_MANIFEST ?=$(MODULE_ROOT)/config/qualification-campaigns.json
 # QUALIFICATION_CAMPAIGN_TOOL: Shared declarative campaign validator and runner.
 export QUALIFICATION_CAMPAIGN_TOOL ?=$(FLOW_ROOT)/ci/qualification_campaign.py
+# STATIC_INTENT_CONFIG: Module-owned SDC and UPF expectation policy.
+export STATIC_INTENT_CONFIG ?=$(MODULE_ROOT)/config/static-intent.json
+# STATIC_INTENT_TOOL: License-independent semantic SDC and UPF validator.
+export STATIC_INTENT_TOOL ?=$(FLOW_ROOT)/ci/static_intent.py
 
 # PYUVM_PYTHON: Python interpreter from the pinned PyUVM virtual environment.
 export PYUVM_PYTHON ?=$(PYUVM_ROOT)/bin/python

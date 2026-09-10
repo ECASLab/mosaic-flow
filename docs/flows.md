@@ -33,6 +33,7 @@ backend mapping.
 | `coverage_qualification` | `open-coverage` | MOSAIC policy validator, Verilator, optional SymbiYosys | Open-source | `verilator_sim` |
 | `negative_qualification` | `open-negative` | MOSAIC declarative campaign runner | Open-source | None |
 | `four_state_qualification` | `open-four-state` | MOSAIC declarative campaign runner, Icarus | Open-source | None |
+| `static_intent` | `open-static-intent` | MOSAIC SDC and UPF validator | Open-source | None |
 | `openroad` | `open-physical` | OpenROAD Flow Scripts | Optional | None |
 | `vcs_sim` | `synopsys-sim` | VCS | Commercial | None |
 | `pyuvm_commercial` | `commercial-pyuvm` | PyUVM, cocotb, VCS or Xcelium | Commercial | None |
@@ -255,6 +256,25 @@ identifies every unmet requirement and is indexed by the release manifest.
 
 See [Coverage qualification](coverage-qualification.md) for the policy schema,
 source selection, formal behavior, limitations, and migration examples.
+
+### Portable static intent
+
+- **ID:** `static_intent`
+- **Target:** `make open-static-intent`
+- **Adapter:** [`flows/static_intent/run.sh`](../flows/static_intent/run.sh)
+- **Inputs:** `STATIC_INTENT_CONFIG` and its selected module-owned SDC and UPF
+- **Reports:** `sdc-findings.json`, `upf-findings.json`, `summary.json`, and
+  `status.txt` below `reports/static_intent/`
+
+This optional gate captures a safe, documented Tcl subset without executing the
+module-owned files. It checks timing policy profiles, constrained ports,
+declared asynchronous exceptions, profile consistency, low-power resources,
+power states, and required or forbidden strategies. Unsupported commands and
+options are explicit failures.
+
+This flow is not STA, OpenSTA, PrimeTime, IEEE 1801, or VC LP signoff. See
+[Portable SDC and UPF intent](static-intent.md) for the schema, supported command
+subset, fixtures, and technology-signoff boundary.
 
 ### Negative-test qualification
 

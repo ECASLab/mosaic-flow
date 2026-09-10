@@ -34,6 +34,7 @@ expected_pass = {
     "coverage_qualification",
     "negative_qualification",
     "four_state_qualification",
+    "static_intent",
     "slang_elaboration",
     "symbiyosys_formal",
     "verible_format",
@@ -51,6 +52,7 @@ assert set(flow_statuses) == {
     "coverage_qualification",
     "negative_qualification",
     "four_state_qualification",
+    "static_intent",
     "sg_cdc",
     "sg_dft",
     "slang_elaboration",
@@ -103,6 +105,7 @@ assert {
     "config/qualification-campaigns.json",
     "config/qualification-equivalent.eqy",
     "config/qualification-inequivalent.eqy",
+    "config/static-intent.json",
     "config/flows.mk",
     "config/formal.sby",
     "config/formal_cover.sby",
@@ -112,6 +115,7 @@ assert {
     "config/verible_waivers.txt",
     "config/verilator_waivers.vlt",
     "constraints/timing.sdc",
+    "constraints/power.upf",
     "filelists/assertions.f",
     "filelists/coverage.f",
     "filelists/properties.f",
@@ -141,6 +145,9 @@ additional_paths = {entry["path"] for entry in deterministic["evidence"]["additi
 assert {
     "reports/negative_qualification/summary.json",
     "reports/four_state_qualification/summary.json",
+    "reports/static_intent/sdc-findings.json",
+    "reports/static_intent/upf-findings.json",
+    "reports/static_intent/summary.json",
 } <= additional_paths
 if expect_clean:
     assert manifest["volatile"]["source_tree"] == {

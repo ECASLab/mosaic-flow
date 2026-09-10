@@ -37,6 +37,7 @@ reported_flows = portable_flows | {
     "coverage_qualification",
     "negative_qualification",
     "four_state_qualification",
+    "static_intent",
 }
 elaboration_flows = {
     "verible_lint",

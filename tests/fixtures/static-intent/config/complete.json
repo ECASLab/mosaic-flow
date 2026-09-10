@@ -1,0 +1,107 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "synthesis",
+        "path": "sdc/sequential.sdc",
+        "kind": "sequential",
+        "expected_ports": {
+          "clock": ["clk"],
+          "input_delay": ["data", "enable"],
+          "output_delay": ["result"]
+        },
+        "clocks": [{"name": "core_clk", "period": 10.0, "port": "clk"}],
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_n"], "to_ports": []}
+        ]
+      },
+      {
+        "name": "physical",
+        "path": "sdc/physical.sdc",
+        "kind": "sequential",
+        "expected_ports": {
+          "clock": ["clk"],
+          "input_delay": ["data", "enable"],
+          "output_delay": ["result"]
+        },
+        "clocks": [{"name": "core_clk", "period": 10.0, "port": "clk"}],
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_n"], "to_ports": []}
+        ]
+      },
+      {
+        "name": "combinational",
+        "path": "sdc/combinational.sdc",
+        "kind": "combinational",
+        "expected_ports": {}
+      },
+      {
+        "name": "clock_gate",
+        "path": "sdc/clock-gate.sdc",
+        "kind": "clock_gating",
+        "expected_ports": {
+          "clock": ["clk"],
+          "input_delay": ["enable", "test_enable"]
+        },
+        "clocks": [{"name": "source_clk", "period": 10.0, "port": "clk"}],
+        "generated_clocks": [
+          {
+            "name": "gated_clk",
+            "source_port": "clk",
+            "output_port": "gated_clk",
+            "combinational": true
+          }
+        ]
+      },
+      {
+        "name": "reset_synchronizer",
+        "path": "sdc/reset-synchronizer.sdc",
+        "kind": "reset_synchronizer",
+        "expected_ports": {
+          "clock": ["clk"],
+          "output_delay": ["rst_sync_n"]
+        },
+        "clocks": [{"name": "destination_clk", "period": 10.0, "port": "clk"}]
+      }
+    ],
+    "consistency": [
+      {
+        "profiles": ["synthesis", "physical"],
+        "commands": [
+          "create_clock",
+          "set_clock_uncertainty",
+          "set_input_delay",
+          "set_output_delay",
+          "set_false_path"
+        ]
+      }
+    ]
+  },
+  "upf": {
+    "path": "upf/retention.upf",
+    "top": "retention_fixture",
+    "mode": "boundary",
+    "required": {
+      "power_domains": ["PD_RETENTION"],
+      "supply_ports": ["VDD_MAIN", "VDD_RETENTION", "VSS"],
+      "supply_nets": ["VDD_MAIN", "VDD_RETENTION", "VSS"],
+      "supply_connections": ["VDD_MAIN", "VDD_RETENTION", "VSS"],
+      "domain_supplies": ["PD_RETENTION"],
+      "port_states": [
+        "VDD_MAIN.MAIN_ON",
+        "VDD_MAIN.MAIN_OFF",
+        "VDD_RETENTION.RETENTION_ON",
+        "VDD_RETENTION.RETENTION_OFF"
+      ],
+      "power_state_tables": ["PST_RETENTION"],
+      "power_states": [
+        "PST_RETENTION.BOTH_ON",
+        "PST_RETENTION.RETAINED",
+        "PST_RETENTION.ALL_OFF"
+      ],
+      "retention": ["RETENTION_REGS"]
+    },
+    "forbidden_strategies": ["isolation", "level_shifting", "power_switch"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "missing",
+        "path": "sdc/missing-constraint.sdc",
+        "kind": "sequential",
+        "expected_ports": {"clock": ["clk"], "output_delay": ["result"]}
+      }
+    ]
+  }
+}

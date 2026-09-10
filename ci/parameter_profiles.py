@@ -29,6 +29,7 @@ SUPPORTED_FLOWS = {
     "pyuvm_open_source",
     "negative_qualification",
     "four_state_qualification",
+    "static_intent",
     "vcs_sim",
     "pyuvm_commercial",
     "synopsys_synthesis",

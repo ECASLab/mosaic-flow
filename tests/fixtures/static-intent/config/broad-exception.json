@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "broad",
+        "path": "sdc/broad-exception.sdc",
+        "kind": "sequential",
+        "expected_ports": {"clock": ["clk"]}
+      }
+    ]
+  }
+}

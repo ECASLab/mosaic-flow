@@ -1,0 +1,17 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "upf": {
+    "path": "upf/isolation.upf",
+    "top": "isolation_fixture",
+    "mode": "boundary",
+    "required": {
+      "power_domains": ["PD_ISO"],
+      "supply_ports": ["VDD", "VSS"],
+      "supply_nets": ["VDD", "VSS"],
+      "supply_connections": ["VDD", "VSS"],
+      "domain_supplies": ["PD_ISO"],
+      "isolation": ["ISO_OUTPUTS"]
+    },
+    "forbidden_strategies": ["level_shifting", "retention", "power_switch"]
+  }
+}

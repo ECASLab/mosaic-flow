@@ -1,0 +1,18 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "upf": {
+    "path": "upf/level-shifter.upf",
+    "top": "level_shifter_fixture",
+    "mode": "boundary",
+    "required": {
+      "power_domains": ["PD_LS"],
+      "supply_ports": ["VDD_LOW", "VDD_HIGH", "VSS"],
+      "supply_nets": ["VDD_LOW", "VDD_HIGH", "VSS"],
+      "supply_connections": ["VDD_LOW", "VDD_HIGH", "VSS"],
+      "domain_supplies": ["PD_LS"],
+      "port_attribute_ports": ["data_out"],
+      "level_shifting": ["LS_OUTPUTS"]
+    },
+    "forbidden_strategies": ["isolation", "retention", "power_switch"]
+  }
+}

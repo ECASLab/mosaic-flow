@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "conflicting",
+        "path": "sdc/conflicting-command.sdc",
+        "kind": "sequential",
+        "expected_ports": {"clock": ["clk"]}
+      }
+    ]
+  }
+}
