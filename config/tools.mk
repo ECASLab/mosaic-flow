@@ -48,8 +48,31 @@ export VERIBLE_FORMAT_ARGS ?=
 # VERIBLE_FORMAT_PATHS: Whitespace-separated module-owned files or directories
 # checked by the formatter. Multi-module profiles should narrow the default paths.
 export VERIBLE_FORMAT_PATHS ?=rtl verif
-# OPENROAD_CMD: OpenROAD executable used by the physical implementation adapter.
+# OPENROAD_CMD: OpenROAD executable reserved for direct tool integrations.
 export OPENROAD_CMD ?=openroad
+# OPENROAD_EXECUTION_MODE: ORFS backend. local uses OPENROAD_FLOW_ROOT and
+# container uses the immutable OPENROAD_ORFS_IMAGE through the selected runtime.
+export OPENROAD_EXECUTION_MODE ?=local
+# OPENROAD_FLOW_ROOT: Qualified local OpenROAD-flow-scripts checkout. Required
+# only when OPENROAD_EXECUTION_MODE is local.
+export OPENROAD_FLOW_ROOT ?=
+# OPENROAD_CONTAINER_RUNTIME: OCI-compatible command used for container mode.
+export OPENROAD_CONTAINER_RUNTIME ?=docker
+# OPENROAD_ORFS_IMAGE: Immutable ORFS image assembled from the pinned repository
+# and digest in tool-versions.env. Overrides must retain the @sha256 form.
+export OPENROAD_ORFS_IMAGE ?=$(ORFS_IMAGE_REPOSITORY)@$(ORFS_IMAGE_DIGEST)
+# OPENROAD_PLATFORM: ORFS public or site-owned platform selected by the module.
+export OPENROAD_PLATFORM ?=nangate45
+# OPENROAD_FLOW_VARIANT: Stable ORFS output namespace for this configuration.
+export OPENROAD_FLOW_VARIANT ?=base
+# OPENROAD_DESIGN_NAME: ORFS design nickname and output directory component.
+export OPENROAD_DESIGN_NAME ?=$(DESIGN_TOP)
+# OPENROAD_CONSTRAINT_FILE: Exact module-owned SDC used by ORFS and evidence.
+export OPENROAD_CONSTRAINT_FILE ?=$(SYNTHESIS_CONSTRAINT_FILE)
+# OPENROAD_EVIDENCE_POLICY: Module-owned artifact and metric acceptance policy.
+export OPENROAD_EVIDENCE_POLICY ?=$(MODULE_ROOT)/config/openroad-evidence.json
+# OPENROAD_EVIDENCE_TOOL: Shared policy validator and evidence normalizer.
+export OPENROAD_EVIDENCE_TOOL ?=$(FLOW_ROOT)/ci/openroad_evidence.py
 # VC_LINT_BIN: VC SpyGlass executable used by the licensed lint adapter.
 export VC_LINT_BIN ?=vc_static_shell
 # VC_CDC_BIN: VC SpyGlass executable used by the licensed CDC adapter.

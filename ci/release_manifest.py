@@ -688,7 +688,10 @@ def generate_manifest(module_root: Path, flow_root: Path, report_dir: Path) -> d
     collect_static_intent_inputs(collector, module_root, required_flows)
     gates = collect_supplemental_gates(module_root, report_dir)
     additional_evidence = []
-    for declared_path in environment_list("RELEASE_ADDITIONAL_EVIDENCE"):
+    for declared_path in (
+        environment_list("RELEASE_STANDARD_EVIDENCE")
+        + environment_list("RELEASE_ADDITIONAL_EVIDENCE")
+    ):
         path = Path(declared_path)
         if not path.is_absolute():
             path = module_root / path

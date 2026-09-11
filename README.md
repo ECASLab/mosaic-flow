@@ -20,6 +20,7 @@ methodology without copying flow scripts or changing module RTL.
 - Declarative HDL and formal coverage qualification with reviewed exclusions
 - Declarative negative-test and four-state qualification with explicit controls
 - Declarative, license-independent SDC and UPF intent validation
+- Reproducible local or pinned-container ORFS implementation with declarative physical evidence
 - Flow selection, statuses, reports, and quality gates
 - Schema-validated release evidence with input hashes and tool identities
 - Pinned open-source tool installers and versions
@@ -40,6 +41,7 @@ reference, and links to:
 - Every open-source and commercial flow
 - Results, quality gates, waivers, and release evidence
 - Portable SDC and UPF intent checks and their signoff boundary
+- Containerized OpenROAD execution and physical evidence policy
 - Methodology development, qualification, and release procedures
 
 ## Consumer quick start

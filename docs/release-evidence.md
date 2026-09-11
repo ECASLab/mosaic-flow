@@ -137,6 +137,14 @@ When enabled, `static_intent` is recorded as an independent required canonical
 flow. Its evidence establishes portable structural intent only and does not
 replace STA or VC LP signoff evidence.
 
+When `openroad` is enabled and not explicitly disabled for the release, the
+generator hashes `OPENROAD_EVIDENCE_POLICY`, the selected ORFS configuration,
+and the exact SDC. It also requires and indexes
+`reports/openroad/evidence.json`. That compact record includes the immutable
+container identity or local ORFS revision, parsed physical metrics, and hashes
+for every required deliverable. A passing exploratory ORFS run is not foundry
+signoff.
+
 Register another tool version command with JSON:
 
 ```make
