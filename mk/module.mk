@@ -126,6 +126,7 @@ RELEASE_STANDARD_INPUTS := \
 	$(if $(filter enabled,$(FLOW_static_intent)),$(STATIC_INTENT_CONFIG)) \
 	$(EQUIVALENCE_CONFIG) \
 	$(OPENROAD_CONFIG) \
+	$(if $(filter openroad,$(DISABLED_FLOWS)),,$(if $(filter enabled,$(FLOW_openroad)),$(OPENROAD_EVIDENCE_POLICY))) \
 	$(SYNTHESIS_CONSTRAINT_FILE) \
 	$(ASYNC_SYNTHESIS_CONSTRAINT_FILE) \
 	$(OPENROAD_CONSTRAINT_FILE) \
@@ -143,6 +144,7 @@ RELEASE_FILELISTS := $(sort $(strip \
 	$(COVERAGE_FILELIST) \
 	$(PYUVM_FILELIST)))
 RELEASE_INPUT_FILES := $(sort $(strip $(RELEASE_STANDARD_INPUTS) $(RELEASE_ADDITIONAL_INPUTS)))
+RELEASE_STANDARD_EVIDENCE := $(if $(filter openroad,$(DISABLED_FLOWS)),,$(if $(filter enabled,$(FLOW_openroad)),$(REPORT_DIR)/openroad/evidence.json))
 
 export RELEASE_MANIFEST_TOOL RELEASE_MODULE_NAME MODULE_REVISION METHODOLOGY_REVISION
 export RELEASE_EXECUTION_CONTEXT RELEASE_ALLOW_DIRTY RELEASE_TECHNOLOGY
@@ -151,7 +153,7 @@ export RELEASE_TECHNOLOGY_METADATA_JSON RELEASE_METADATA_JSON
 export RELEASE_EXECUTION_METADATA_JSON RELEASE_ADDITIONAL_TOOLS_JSON
 export RELEASE_COVERAGE_EVIDENCE_JSON RELEASE_SUPPLEMENTAL_GATES
 export RELEASE_ADDITIONAL_INPUTS RELEASE_ADDITIONAL_EVIDENCE RELEASE_MANIFEST_DIR
-export RELEASE_FILELISTS RELEASE_INPUT_FILES
+export RELEASE_FILELISTS RELEASE_INPUT_FILES RELEASE_STANDARD_EVIDENCE
 
 OPEN_SOURCE_TARGETS := open-source open-style-lint open-format-check open-elaborate open-lint open-waiver-draft open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-static-intent open-quality-gate
 OPEN_FLOW_TARGETS := open-style-lint open-format-check open-elaborate open-lint open-synth open-formal open-equivalence open-sim open-pyuvm open-coverage open-negative open-four-state open-static-intent

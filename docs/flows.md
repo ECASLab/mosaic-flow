@@ -312,18 +312,24 @@ for the manifest schema, case semantics, evidence, and migration guidance.
 - **ID:** `openroad`
 - **Target:** `make open-physical`
 - **Adapter:** [`flows/openroad/run.sh`](../flows/openroad/run.sh)
-- **Inputs:** `OPENROAD_FLOW_ROOT`, `OPENROAD_CONFIG`, PDK and platform collateral
-- **Reports:** `reports/openroad/run.log`, `status.txt`
-- **Work products:** managed by the selected OpenROAD Flow Scripts checkout
+- **Inputs:** `OPENROAD_CONFIG`, `OPENROAD_CONSTRAINT_FILE`,
+  `OPENROAD_EVIDENCE_POLICY`, platform and PDK collateral
+- **Reports:** `reports/openroad/run.log`, `evidence.json`, `status.txt`
+- **Work products:** `work/openroad/{results,reports,logs,objects}/<platform>/<design>/<variant>/`
 
 This optional adapter invokes OpenROAD Flow Scripts with the module-owned design
 configuration. It is not part of `make open-source` because it requires a
 selected PDK, compatible libraries, LEF data, and physical constraints.
 
-Set `OPENROAD_FLOW_ROOT` to a qualified OpenROAD Flow Scripts checkout. The
-module configuration must select its platform, top, source files, SDC, and
-physical targets. The exact physical result hierarchy is owned by OpenROAD Flow
-Scripts rather than copied into the module's `work/openroad/` directory.
+Set `OPENROAD_EXECUTION_MODE=local` and `OPENROAD_FLOW_ROOT` for a qualified
+checkout, or select `container` to use the methodology's immutable ORFS image.
+The module configuration selects its platform, top, source files, SDC, physical
+targets, expected artifacts, parsed metrics, and acceptance thresholds. The
+adapter isolates ORFS outputs below the selected module and profile work root,
+runs a container with the invoking UID and GID, and hashes accepted outputs.
+
+See [Containerized OpenROAD](openroad.md) for the complete configuration,
+policy, evidence, CI, and non-signoff contract.
 
 More information: [OpenROAD Flow](https://openroad-flow-scripts.readthedocs.io/en/latest/mainREADME.html)
 and its [configuration tutorial](https://openroad-flow-scripts.readthedocs.io/en/latest/tutorials/FlowTutorial.html).

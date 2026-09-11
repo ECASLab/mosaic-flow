@@ -24,13 +24,15 @@ maintainers, and contributors to the methodology itself.
    named coverpoints, reviewed exclusions, and formal reachability.
 8. [Negative-test and four-state qualification](qualification-campaigns.md)
    defines declarative fault campaigns, controls, diagnostics, and evidence.
-9. [Results and quality gates](results-and-quality-gates.md) defines statuses,
+9. [Containerized OpenROAD](openroad.md) defines local and pinned-container
+   execution, physical evidence policy, isolation, and the signoff boundary.
+10. [Results and quality gates](results-and-quality-gates.md) defines statuses,
    waivers, generated artifacts, and CI behavior.
-10. [Portable SDC and UPF intent](static-intent.md) defines the declarative
+11. [Portable SDC and UPF intent](static-intent.md) defines the declarative
     constraint and power-intent gate and its signoff boundary.
-11. [Release evidence](release-evidence.md) defines the manifest schema,
+12. [Release evidence](release-evidence.md) defines the manifest schema,
    acceptance policy, extension points, and release integration.
-12. [Methodology development](development.md) explains how to change, test,
+13. [Methodology development](development.md) explains how to change, test,
    qualify, version, and release this repository.
 
 ## Quick reference
@@ -56,6 +58,7 @@ maintainers, and contributors to the methodology itself.
 | Qualify HDL and formal coverage | [Coverage qualification](coverage-qualification.md) |
 | Qualify known faults and X/Z controls | [Qualification campaigns](qualification-campaigns.md) |
 | Validate portable SDC and UPF intent | `make open-static-intent` |
+| Run pinned containerized OpenROAD | `make OPENROAD_EXECUTION_MODE=container open-physical` |
 | Inspect machine-readable status | Module `reports/<flow-id>/status.txt` |
 | Add a methodology flow | [Methodology development](development.md#adding-a-flow) |
 
@@ -72,6 +75,7 @@ most important implementation entry points are:
 - `ci/parameter_profiles.py` for parameter translation and profile evidence
 - `ci/release_manifest.py` for release evidence generation and validation
 - `ci/static_intent.py` for non-executing SDC and UPF command capture
+- `ci/openroad_evidence.py` for physical artifact and metric qualification
 - `ci/run_flow.sh` for execution eligibility and status recording
 - `ci/*_quality_gate.sh` for acceptance policy
 - `flows/<flow-name>/` for tool adapters

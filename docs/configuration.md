@@ -208,6 +208,8 @@ Flow-specific inputs are required when their flow is enabled:
 | `FORMAL_COVER_CONFIG` | SymbiYosys cover reachability task |
 | `EQUIVALENCE_CONFIG` | EQY |
 | `OPENROAD_CONFIG` | OpenROAD Flow Scripts |
+| `OPENROAD_CONSTRAINT_FILE` | OpenROAD Flow Scripts and physical evidence |
+| `OPENROAD_EVIDENCE_POLICY` | OpenROAD physical evidence qualification |
 | `SYNTHESIS_CONSTRAINT_FILE` | Module convention for synthesis SDC |
 | `CDC_CONFIG` | VC CDC or SpyGlass CDC adapter |
 | `DFT_CONFIG` | SpyGlass DFT adapter |
@@ -344,7 +346,16 @@ that path until the adapter is changed to consume the variable directly.
 | `TARGET_LIBRARY` | Site or project target libraries when used by setup Tcl |
 | `LINK_LIBRARY` | Site or project link libraries when used by setup Tcl |
 | `OPERATING_CONDITION` | Requested timing or power corner when used by setup Tcl |
-| `OPENROAD_FLOW_ROOT` | Checkout root of OpenROAD Flow Scripts |
+| `OPENROAD_EXECUTION_MODE` | `local` checkout or pinned `container` execution |
+| `OPENROAD_FLOW_ROOT` | Checkout root of OpenROAD Flow Scripts in local mode |
+| `OPENROAD_CONTAINER_RUNTIME` | OCI runtime command, `docker` by default |
+| `OPENROAD_ORFS_IMAGE` | Immutable `image@sha256:<digest>` ORFS reference |
+| `OPENROAD_PLATFORM` | Selected ORFS platform, `nangate45` by default |
+| `OPENROAD_FLOW_VARIANT` | Stable ORFS output variant, `base` by default |
+| `OPENROAD_DESIGN_NAME` | Design nickname, `DESIGN_TOP` by default |
+| `OPENROAD_CONFIG` | Module-owned ORFS Make configuration |
+| `OPENROAD_CONSTRAINT_FILE` | Exact module-owned SDC supplied to ORFS |
+| `OPENROAD_EVIDENCE_POLICY` | Module-owned artifact and metric policy |
 
 The shared Tcl currently sources `TECH_SETUP_TCL` when it is nonempty. The other
 technology variables are exported for the site setup to consume. Their exact
@@ -383,9 +394,9 @@ make synopsys-synth
 | `PRIMETIME_BIN` | `pt_shell` | PrimeTime |
 | `PRIMEPOWER_BIN` | `pt_shell` | PrimePower |
 
-The current OpenROAD wrapper invokes the OpenROAD Flow Scripts Makefile. It
-uses `OPENROAD_FLOW_ROOT` and `OPENROAD_CONFIG` rather than invoking
-`OPENROAD_CMD` directly.
+The OpenROAD wrapper invokes the ORFS Makefile locally or through the immutable
+container pin. `OPENROAD_CMD` remains reserved for direct integrations. See
+[Containerized OpenROAD](openroad.md) for execution and evidence details.
 
 `VERIBLE_FORMAT_ARGS` provides whitespace-separated formatter options such as
 `--indentation_spaces=4`. `VERIBLE_FORMAT_PATHS` selects the module-owned files
