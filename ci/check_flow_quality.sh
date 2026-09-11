@@ -5,7 +5,7 @@ flow_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${flow_root}"
 
 mapfile -d '' shell_files < <(
-  find ci flows tests -path 'tests/fixture-module/work' -prune -o \
+  find ci flows tests -type d \( -name work -o -name reports \) -prune -o \
     -type f -name '*.sh' -print0 | sort -z
 )
 mapfile -d '' workflow_files < <(find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 | sort -z)
@@ -16,6 +16,18 @@ done
 
 shellcheck --external-sources "${shell_files[@]}"
 actionlint "${workflow_files[@]}"
+python3 -m py_compile ci/module_manifest.py
+python3 -m py_compile ci/parameter_profiles.py
+python3 -m py_compile ci/release_manifest.py
+python3 -m py_compile ci/coverage_qualification.py
+python3 -m py_compile ci/qualification_campaign.py
+python3 -m py_compile ci/static_intent.py
+python3 -m py_compile ci/openroad_evidence.py
+python3 -m json.tool schemas/release-evidence-v1.schema.json >/dev/null
+python3 -m json.tool schemas/coverage-policy-v1.schema.json >/dev/null
+python3 -m json.tool schemas/qualification-campaigns-v1.schema.json >/dev/null
+python3 -m json.tool schemas/static-intent-v1.schema.json >/dev/null
+python3 -m json.tool schemas/openroad-evidence-policy-v1.schema.json >/dev/null
 
 if ! grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' VERSION; then
   echo "VERSION must contain a semantic version such as 1.2.3" >&2
@@ -36,6 +48,8 @@ required_version_keys=(
   SHELLCHECK_SHA256
   ACTIONLINT_VERSION
   ACTIONLINT_SHA256
+  ORFS_IMAGE_REPOSITORY
+  ORFS_IMAGE_DIGEST
 )
 source config/tool-versions.env
 for version_key in "${required_version_keys[@]}"; do
@@ -44,6 +58,11 @@ for version_key in "${required_version_keys[@]}"; do
     exit 1
   fi
 done
+
+if [[ ! "${ORFS_IMAGE_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  echo "ORFS_IMAGE_DIGEST must be an immutable sha256 digest" >&2
+  exit 1
+fi
 
 for requirement in \
   "pyuvm==${PYUVM_VERSION}" \
@@ -69,4 +88,11 @@ while IFS= read -r -d '' data_file; do
 done < <(find . -path './.git' -prune -o -type f \( -name '*.tcl' -o -name '*.mk' -o -name '*.env' \) -print0)
 
 tests/test_quality_gate.sh
+tests/test_multi_module.sh
+tests/test_parameter_profiles.sh
+tests/test_release_manifest.sh
+tests/test_coverage_qualification.sh
+tests/test_qualification_campaigns.sh
+tests/test_static_intent.sh
+tests/test_openroad_evidence.sh
 echo "mosaic-flow static quality checks passed"

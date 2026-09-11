@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecaslab.github.io/mosaic-flow/schemas/openroad-evidence-policy-v1.schema.json",
+  "title": "MOSAIC OpenROAD physical evidence policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "artifacts", "metrics"],
+  "properties": {
+    "schema": {"const": "mosaic-openroad-evidence-policy-v1"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/metric"}
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "directory": {
+      "enum": ["results", "reports", "logs", "objects"]
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "directory", "path"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "directory": {"$ref": "#/$defs/directory"},
+        "path": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "directory", "path", "pattern"],
+      "anyOf": [
+        {"required": ["minimum"]},
+        {"required": ["maximum"]}
+      ],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "directory": {"$ref": "#/$defs/directory"},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Python regular expression containing one named integer group called value."
+        },
+        "match": {"enum": ["only", "first", "last"]},
+        "minimum": {"type": "integer", "minimum": 0},
+        "maximum": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

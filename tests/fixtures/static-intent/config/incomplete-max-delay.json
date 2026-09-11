@@ -1,0 +1,12 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "incomplete_path",
+        "path": "sdc/incomplete-max-delay.sdc",
+        "kind": "combinational"
+      }
+    ]
+  }
+}

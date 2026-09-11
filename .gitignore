@@ -1,3 +1,9 @@
 tests/fixture-module/work/
 tests/fixture-module/reports/*
 !tests/fixture-module/reports/.gitkeep
+tests/fixture-multi-module/work/
+tests/fixture-multi-module/reports/
+tests/fixture-parameter-profiles/work/
+tests/fixture-parameter-profiles/reports/
+__pycache__/
+*.py[cod]

@@ -14,6 +14,18 @@ work/<canonical-flow-id>/
 logs, and compact summaries. Work directories contain generated executables,
 netlists, proof databases, and tool state.
 
+Named parameter profiles add a namespace before the flow ID:
+
+```text
+reports/<profile>/<flow-id>/
+work/<profile>/<flow-id>/
+```
+
+Multi-module repositories use `<module>/<profile>/<flow-id>`. Every selected
+profile records `parameter-profile.json`, while `all-profiles` records the
+cross-profile `parameter-profile-summary.json` at the unqualified report root.
+See [Parameter-profile qualification](parameter-profiles.md).
+
 `make clean` removes the complete work tree and every item below `reports/`
 except `.gitkeep`. It is idempotent and succeeds when either generated root does
 not exist, including on a fresh module checkout.
@@ -67,10 +79,19 @@ the dependency graph and filesystem are temporarily inconsistent.
 - `eqy_equivalence`
 - `verilator_sim`
 - `pyuvm_open_source`
+- `coverage_qualification`
+- `negative_qualification`
+- `four_state_qualification`
+- `static_intent`
 
 `make open-source` runs these targets and then the gate. PyUVM is disabled by
-default and therefore records `SKIP` unless the module enables it. Once enabled,
-its open-source result must be `PASS`. `openroad` is optional and intentionally
+default and therefore records `SKIP` unless the module enables it. Coverage
+qualification is also disabled by default. Negative-test and four-state
+qualification are likewise disabled by default and independently selectable.
+Static intent validation is disabled by default and becomes required when a
+module enables it.
+Once any optional flow is enabled, its open-source result must be `PASS`.
+`openroad` is optional and intentionally
 outside this portable gate.
 
 ## Commercial quality gate
@@ -131,11 +152,23 @@ The fixture integration job runs:
 
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$GITHUB_WORKSPACE" clean open-source
+make -C tests/fixture-multi-module FLOW_ROOT="$GITHUB_WORKSPACE" clean all-modules MODULE_JOBS=2
+make -C tests/fixture-parameter-profiles FLOW_ROOT="$GITHUB_WORKSPACE" clean all-profiles PROFILE_JOBS=4
 ```
 
 It caches pinned tools and uploads fixture reports even when the flow fails. The
 fixture is deliberately independent of `mosaic-module-template`, so the
 methodology can prove its own consumer contract before release.
+
+The multi-module fixture independently qualifies named and fallback input
+resolution, module-specific policy loading, formatter options, isolated work
+and reports, aggregate failure propagation, and deterministic CI matrix output.
+
+The parameter-profile fixture qualifies a minimum width, nominal width, feature
+toggle, and elaboration-only profile. It checks profile-local synthesis,
+formal, simulation, PyUVM, and EQY evidence, plus explicit `SKIP` results for
+flows outside the elaboration-only policy. Its negative tests require aggregate
+failure for failed, blocked, and missing profile evidence.
 
 The fixture keeps `PROPERTY_FILELIST`, `ASSERTION_FILELIST`, and
 `COVERAGE_FILELIST` separate, then uses each list in its normal testbench,
@@ -151,24 +184,14 @@ retain `FAIL`.
 
 ## Release evidence
 
-A module release should retain enough information to reproduce and review the
-decision. At minimum, record:
+`make release-manifest` validates every canonical flow status and creates a
+schema-versioned JSON index plus a short text summary. It records revisions,
+dirty state, technology, tool versions, input hashes, coverage, supplemental
+gates, and execution context. See [Release evidence](release-evidence.md) for
+the complete policy, configuration, CI example, and migration procedure.
 
-- Module Git revision
-- `mosaic-flow` Git revision and semantic version
-- Tool names and versions
-- Flow configuration and selected CDC engine
-- Constraint, UPF, and waiver revisions
-- PDK, libraries, operating condition, and analysis corner where applicable
-- Status and principal reports for every enabled flow
-- Test identity, seed policy, and functional coverage summary
-- Formal properties and proof status
-- Activity source and annotation coverage for power analysis
-- Date and execution environment
-
-Generated databases and full logs should normally be stored as CI or release
-artifacts. Small reviewed manifests and source-controlled waiver records belong
-in Git. Do not commit licensed libraries, credentials, or large work databases.
+Generated databases and full logs should remain CI or release artifacts. Do
+not commit licensed libraries, credentials, or large work databases.
 
 ## Interpreting failures
 

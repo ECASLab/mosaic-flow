@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "duplicate",
+        "path": "sdc/duplicate-command.sdc",
+        "kind": "sequential",
+        "expected_ports": {"clock": ["clk"]}
+      }
+    ]
+  }
+}

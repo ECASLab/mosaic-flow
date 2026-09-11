@@ -1,0 +1,55 @@
+{
+  "schema": "mosaic-openroad-evidence-policy-v1",
+  "artifacts": [
+    {"name": "final_def", "directory": "results", "path": "6_final.def"},
+    {"name": "final_gds", "directory": "results", "path": "6_final.gds"},
+    {"name": "final_odb", "directory": "results", "path": "6_final.odb"},
+    {"name": "final_sdc", "directory": "results", "path": "6_final.sdc"},
+    {"name": "final_netlist", "directory": "results", "path": "6_final.v"}
+  ],
+  "metrics": [
+    {
+      "name": "setup_violations",
+      "directory": "reports",
+      "path": "6_finish.rpt",
+      "pattern": "^setup violation count[ \\t]+(?P<value>[0-9]+)$",
+      "maximum": 0
+    },
+    {
+      "name": "hold_violations",
+      "directory": "reports",
+      "path": "6_finish.rpt",
+      "pattern": "^hold violation count[ \\t]+(?P<value>[0-9]+)$",
+      "maximum": 0
+    },
+    {
+      "name": "slew_violations",
+      "directory": "reports",
+      "path": "6_finish.rpt",
+      "pattern": "^max slew violation count[ \\t]+(?P<value>[0-9]+)$",
+      "maximum": 0
+    },
+    {
+      "name": "fanout_violations",
+      "directory": "reports",
+      "path": "6_finish.rpt",
+      "pattern": "^max fanout violation count[ \\t]+(?P<value>[0-9]+)$",
+      "maximum": 0
+    },
+    {
+      "name": "capacitance_violations",
+      "directory": "reports",
+      "path": "6_finish.rpt",
+      "pattern": "^max cap violation count[ \\t]+(?P<value>[0-9]+)$",
+      "maximum": 0
+    },
+    {
+      "name": "routing_violations",
+      "directory": "logs",
+      "path": "5_2_route.log",
+      "pattern": "Number of violations = (?P<value>[0-9]+)",
+      "match": "last",
+      "maximum": 0
+    }
+  ]
+}

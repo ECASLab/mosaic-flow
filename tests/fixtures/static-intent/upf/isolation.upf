@@ -1,0 +1,11 @@
+set_design_top isolation_fixture
+create_power_domain PD_ISO -include_scope
+create_supply_port VDD -domain PD_ISO
+create_supply_port VSS -domain PD_ISO
+create_supply_net VDD -domain PD_ISO
+create_supply_net VSS -domain PD_ISO
+connect_supply_net VDD -ports VDD
+connect_supply_net VSS -ports VSS
+set_domain_supply_net PD_ISO -primary_power_net VDD -primary_ground_net VSS
+set_isolation ISO_OUTPUTS -domain PD_ISO -applies_to outputs -clamp_value 0 -isolation_power_net VDD -isolation_ground_net VSS -location self
+set_isolation_control ISO_OUTPUTS -domain PD_ISO -isolation_signal {isolate high} -isolation_sense high

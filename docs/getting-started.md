@@ -6,8 +6,10 @@ For the portable open-source flow, use:
 
 - Linux x86-64 for automatic binary installation
 - GNU Make
+- GNU `xargs` from findutils for multi-module parallel execution
 - Bash
 - Git
+- Python 3
 - `curl`, `tar`, and `sha256sum`
 - Network access during the first tool installation
 
@@ -52,6 +54,10 @@ include $(FLOW_ROOT)/mk/module.mk
 Keeping this file thin lets a methodology update change orchestration and tool
 versions by moving one Git pointer.
 
+Repositories with multiple independently selectable RTL modules should import
+`mk/project.mk` instead. See [Multi-module projects](multi-module-projects.md)
+for the manifest, module profile, concurrent execution, and CI contracts.
+
 ## Define the module contract
 
 Create `config/design.mk` with at least these values:
@@ -76,6 +82,8 @@ export FORMAL_CONFIG := $(FLOW_CONFIG_ROOT)/symbiyosys/formal.sby
 export FORMAL_COVER_CONFIG := $(FLOW_CONFIG_ROOT)/symbiyosys/formal_cover.sby
 export EQUIVALENCE_CONFIG := $(FLOW_CONFIG_ROOT)/eqy/equivalence.eqy
 export OPENROAD_CONFIG := $(FLOW_CONFIG_ROOT)/openroad/config.mk
+export OPENROAD_CONSTRAINT_FILE := $(FLOW_CONFIG_ROOT)/openroad/timing.sdc
+export OPENROAD_EVIDENCE_POLICY := $(FLOW_CONFIG_ROOT)/openroad/evidence.json
 export SYNTHESIS_CONSTRAINT_FILE := $(FLOW_CONFIG_ROOT)/synthesis/timing.sdc
 export CDC_CONFIG := $(FLOW_CONFIG_ROOT)/cdc/constraints.tcl
 export DFT_CONFIG := $(FLOW_CONFIG_ROOT)/sg_dft/constraints.tcl
@@ -94,6 +102,23 @@ not be portable.
 
 See [Configuration](configuration.md#design-and-path-variables) for optional
 technology variables and the exact meaning of each setting.
+
+## Qualify parameterized elaborations
+
+Add `config/parameter-profiles.json` when materially different parameter values
+need independently attributable evidence. Declare boundary values, nominal
+settings, feature toggles, and the flows required for each profile. Then run:
+
+```sh
+make profile-manifest-check
+make profile-list
+make clean all-profiles PROFILE_JOBS=4
+```
+
+Once a manifest exists, select `PROFILE=<name>` for individual flow targets.
+The methodology applies the exact parameter set and writes isolated work and
+reports below that profile name. The complete schema, evidence policy, and CI
+examples are in [Parameter-profile qualification](parameter-profiles.md).
 
 ## Understand PyUVM, SVA, and coverage
 
@@ -176,6 +201,7 @@ FLOW_symbiyosys_formal := enabled
 FLOW_eqy_equivalence := enabled
 FLOW_verilator_sim := enabled
 FLOW_pyuvm_open_source := disabled
+FLOW_static_intent := disabled
 FLOW_openroad := disabled
 
 FLOW_vcs_sim := enabled
@@ -204,6 +230,23 @@ Check the resolved policy before running tools:
 ```sh
 make flow-config-check
 ```
+
+## Generate release evidence
+
+After every enabled flow and module-owned supplemental gate has passed, create
+one indexed qualification record:
+
+```sh
+make \
+  MODULE_REVISION="$(git rev-parse HEAD)" \
+  METHODOLOGY_REVISION="$(git -C mosaic-flow rev-parse HEAD)" \
+  release-manifest release-manifest-validate
+```
+
+The output is written below `reports/release_manifest/native/`. Configure
+technology details, extra inputs, and supplemental gates in `config/design.mk`.
+See [Release evidence](release-evidence.md) before connecting the target to CI
+or a module release checklist.
 
 ## Run the first portable checks
 

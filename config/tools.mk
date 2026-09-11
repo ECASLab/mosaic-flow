@@ -32,14 +32,47 @@ export YOSYS_CMD ?=yosys
 export SBY_CMD ?=sby
 # EQY_CMD: EQY executable used for RTL-to-netlist equivalence.
 export EQY_CMD ?=eqy
+# IVERILOG_CMD: Pinned OSS CAD Suite compiler used by four-state qualification.
+export IVERILOG_CMD ?=iverilog
+# VVP_CMD: Icarus runtime used by four-state qualification cases.
+export VVP_CMD ?=vvp
 # SLANG_CMD: Slang executable used for SystemVerilog elaboration.
 export SLANG_CMD ?=slang
 # VERIBLE_LINT_CMD: Verible executable used for syntax and style linting.
 export VERIBLE_LINT_CMD ?=verible-verilog-lint
 # VERIBLE_FORMAT_CMD: Verible executable used for formatting checks.
 export VERIBLE_FORMAT_CMD ?=verible-verilog-format
-# OPENROAD_CMD: OpenROAD executable used by the physical implementation adapter.
+# VERIBLE_FORMAT_ARGS: Optional whitespace-separated formatting policy arguments,
+# such as --indentation_spaces=4, supplied by the selected module profile.
+export VERIBLE_FORMAT_ARGS ?=
+# VERIBLE_FORMAT_PATHS: Whitespace-separated module-owned files or directories
+# checked by the formatter. Multi-module profiles should narrow the default paths.
+export VERIBLE_FORMAT_PATHS ?=rtl verif
+# OPENROAD_CMD: OpenROAD executable reserved for direct tool integrations.
 export OPENROAD_CMD ?=openroad
+# OPENROAD_EXECUTION_MODE: ORFS backend. local uses OPENROAD_FLOW_ROOT and
+# container uses the immutable OPENROAD_ORFS_IMAGE through the selected runtime.
+export OPENROAD_EXECUTION_MODE ?=local
+# OPENROAD_FLOW_ROOT: Qualified local OpenROAD-flow-scripts checkout. Required
+# only when OPENROAD_EXECUTION_MODE is local.
+export OPENROAD_FLOW_ROOT ?=
+# OPENROAD_CONTAINER_RUNTIME: OCI-compatible command used for container mode.
+export OPENROAD_CONTAINER_RUNTIME ?=docker
+# OPENROAD_ORFS_IMAGE: Immutable ORFS image assembled from the pinned repository
+# and digest in tool-versions.env. Overrides must retain the @sha256 form.
+export OPENROAD_ORFS_IMAGE ?=$(ORFS_IMAGE_REPOSITORY)@$(ORFS_IMAGE_DIGEST)
+# OPENROAD_PLATFORM: ORFS public or site-owned platform selected by the module.
+export OPENROAD_PLATFORM ?=nangate45
+# OPENROAD_FLOW_VARIANT: Stable ORFS output namespace for this configuration.
+export OPENROAD_FLOW_VARIANT ?=base
+# OPENROAD_DESIGN_NAME: ORFS design nickname and output directory component.
+export OPENROAD_DESIGN_NAME ?=$(DESIGN_TOP)
+# OPENROAD_CONSTRAINT_FILE: Exact module-owned SDC used by ORFS and evidence.
+export OPENROAD_CONSTRAINT_FILE ?=$(SYNTHESIS_CONSTRAINT_FILE)
+# OPENROAD_EVIDENCE_POLICY: Module-owned artifact and metric acceptance policy.
+export OPENROAD_EVIDENCE_POLICY ?=$(MODULE_ROOT)/config/openroad-evidence.json
+# OPENROAD_EVIDENCE_TOOL: Shared policy validator and evidence normalizer.
+export OPENROAD_EVIDENCE_TOOL ?=$(FLOW_ROOT)/ci/openroad_evidence.py
 # VC_LINT_BIN: VC SpyGlass executable used by the licensed lint adapter.
 export VC_LINT_BIN ?=vc_static_shell
 # VC_CDC_BIN: VC SpyGlass executable used by the licensed CDC adapter.
@@ -72,6 +105,21 @@ export FORMAL_COVER_CONFIG ?=
 export SIM_COVERAGE ?=enabled
 # VERILATOR_COVERAGE_CMD: Utility used to export coverage.dat as coverage.info.
 export VERILATOR_COVERAGE_CMD ?=verilator_coverage
+# COVERAGE_QUALIFICATION_POLICY: Module-owned declarative coverage requirements.
+export COVERAGE_QUALIFICATION_POLICY ?=$(MODULE_ROOT)/config/coverage-policy.json
+# COVERAGE_QUALIFICATION_SOURCE: Existing evidence producer or dedicated rerun.
+# Accepted values are verilator_sim, pyuvm_open_source, and dedicated.
+export COVERAGE_QUALIFICATION_SOURCE ?=verilator_sim
+# COVERAGE_QUALIFICATION_TOOL: Shared policy validator and evidence normalizer.
+export COVERAGE_QUALIFICATION_TOOL ?=$(FLOW_ROOT)/ci/coverage_qualification.py
+# QUALIFICATION_CAMPAIGN_MANIFEST: Module-owned negative and four-state case declarations.
+export QUALIFICATION_CAMPAIGN_MANIFEST ?=$(MODULE_ROOT)/config/qualification-campaigns.json
+# QUALIFICATION_CAMPAIGN_TOOL: Shared declarative campaign validator and runner.
+export QUALIFICATION_CAMPAIGN_TOOL ?=$(FLOW_ROOT)/ci/qualification_campaign.py
+# STATIC_INTENT_CONFIG: Module-owned SDC and UPF expectation policy.
+export STATIC_INTENT_CONFIG ?=$(MODULE_ROOT)/config/static-intent.json
+# STATIC_INTENT_TOOL: License-independent semantic SDC and UPF validator.
+export STATIC_INTENT_TOOL ?=$(FLOW_ROOT)/ci/static_intent.py
 
 # PYUVM_PYTHON: Python interpreter from the pinned PyUVM virtual environment.
 export PYUVM_PYTHON ?=$(PYUVM_ROOT)/bin/python

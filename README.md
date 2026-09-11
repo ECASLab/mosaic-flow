@@ -15,7 +15,14 @@ methodology without copying flow scripts or changing module RTL.
 - Make targets and flow dependency orchestration
 - Open-source and Synopsys tool adapters
 - Optional PyUVM verification with open-source, VCS, and Xcelium backends
+- Single-module and manifest-based multi-module project orchestration
+- Named parameter-profile qualification across elaboration and implementation
+- Declarative HDL and formal coverage qualification with reviewed exclusions
+- Declarative negative-test and four-state qualification with explicit controls
+- Declarative, license-independent SDC and UPF intent validation
+- Reproducible local or pinned-container ORFS implementation with declarative physical evidence
 - Flow selection, statuses, reports, and quality gates
+- Schema-validated release evidence with input hashes and tool identities
 - Pinned open-source tool installers and versions
 - Methodology CI and its independent fixture module
 
@@ -33,6 +40,8 @@ reference, and links to:
 - PyUVM, SVA, and coverage reuse across verification environments
 - Every open-source and commercial flow
 - Results, quality gates, waivers, and release evidence
+- Portable SDC and UPF intent checks and their signoff boundary
+- Containerized OpenROAD execution and physical evidence policy
 - Methodology development, qualification, and release procedures
 
 ## Consumer quick start
@@ -56,9 +65,18 @@ include $(FLOW_ROOT)/config/tools.mk
 include $(FLOW_ROOT)/mk/module.mk
 ```
 
+A repository containing multiple independently qualified modules instead uses
+the project bootstrap and a validated module manifest:
+
+```make
+include $(FLOW_ROOT)/mk/project.mk
+```
+
 See [Getting started](docs/getting-started.md) for the complete module contract
-and [Configuration](docs/configuration.md) for flow selection, dependencies,
-tool overrides, and technology setup.
+and [Multi-module projects](docs/multi-module-projects.md) for registry,
+selection, concurrent execution, and CI matrix guidance. Parameterizable RTL
+can use [Parameter profiles](docs/parameter-profiles.md) to qualify independent
+elaborations without duplicating flow scripts.
 
 ## Methodology validation
 
@@ -69,6 +87,9 @@ complete portable fixture flow:
 ci/install_ci_tools.sh "$HOME/.local"
 PATH="$HOME/.local/bin:$PATH" ci/check_flow_quality.sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
+make -C tests/fixture-multi-module FLOW_ROOT="$PWD" clean all-modules MODULE_JOBS=2
+make -C tests/fixture-parameter-profiles FLOW_ROOT="$PWD" clean all-profiles PROFILE_JOBS=4
+tests/test_release_manifest.sh
 ```
 
 GitHub Actions runs the same validation on pushes and pull requests. Commercial

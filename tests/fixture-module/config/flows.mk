@@ -7,6 +7,10 @@ FLOW_symbiyosys_formal := enabled
 FLOW_eqy_equivalence := enabled
 FLOW_verilator_sim := enabled
 FLOW_pyuvm_open_source := enabled
+FLOW_coverage_qualification := enabled
+FLOW_negative_qualification := enabled
+FLOW_four_state_qualification := enabled
+FLOW_static_intent := enabled
 FLOW_openroad := enabled
 FLOW_vcs_sim := enabled
 FLOW_pyuvm_commercial := disabled
@@ -20,5 +24,6 @@ FLOW_synopsys_primetime := enabled
 FLOW_synopsys_primepower := enabled
 
 FLOW_DEPENDENCIES_eqy_equivalence := yosys_synthesis
+FLOW_DEPENDENCIES_coverage_qualification := verilator_sim
 FLOW_DEPENDENCIES_synopsys_primetime := synopsys_synthesis
 FLOW_DEPENDENCIES_synopsys_primepower := vcs_sim synopsys_synthesis

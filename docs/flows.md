@@ -10,6 +10,13 @@ module repository.
 All target paths below are relative to the module root unless identified as
 shared methodology paths.
 
+When `PROFILE=<name>` is selected, supported adapters elaborate the canonical
+parameter map and place all paths below that profile's report and work roots.
+Verible remains a source-only check. Formal and EQY adapters render temporary
+profile-specific configuration files without modifying module-owned inputs.
+See [Parameter-profile qualification](parameter-profiles.md) for the complete
+backend mapping.
+
 ## Summary
 
 | Canonical ID | Make target | Tool | Gate | Default dependencies |
@@ -23,6 +30,10 @@ shared methodology paths.
 | `eqy_equivalence` | `open-equivalence` | EQY | Open-source | `yosys_synthesis` |
 | `verilator_sim` | `open-sim` | Verilator | Open-source | None |
 | `pyuvm_open_source` | `open-pyuvm` | PyUVM, cocotb, Verilator or Icarus | Open-source | None |
+| `coverage_qualification` | `open-coverage` | MOSAIC policy validator, Verilator, optional SymbiYosys | Open-source | `verilator_sim` |
+| `negative_qualification` | `open-negative` | MOSAIC declarative campaign runner | Open-source | None |
+| `four_state_qualification` | `open-four-state` | MOSAIC declarative campaign runner, Icarus | Open-source | None |
+| `static_intent` | `open-static-intent` | MOSAIC SDC and UPF validator | Open-source | None |
 | `openroad` | `open-physical` | OpenROAD Flow Scripts | Optional | None |
 | `vcs_sim` | `synopsys-sim` | VCS | Commercial | None |
 | `pyuvm_commercial` | `commercial-pyuvm` | PyUVM, cocotb, VCS or Xcelium | Commercial | None |
@@ -226,23 +237,99 @@ Verilator remains the portable default.
 More information: [PyUVM](https://github.com/pyuvm/pyuvm) and
 [cocotb simulator support](https://docs.cocotb.org/en/stable/simulator_support.html).
 
+### Coverage qualification
+
+- **ID:** `coverage_qualification`
+- **Target:** `make open-coverage`
+- **Adapter:** [`flows/coverage/run.sh`](../flows/coverage/run.sh)
+- **Inputs:** `COVERAGE_QUALIFICATION_POLICY`, native simulator coverage, and
+  optional `FORMAL_COVER_CONFIG`
+- **Reports:** `reports/coverage_qualification/summary.json`, `status.txt`, and
+  an optional `formal.log`
+- **Default dependency:** `verilator_sim`
+
+This optional gate applies independent line, branch, toggle, and user coverage
+thresholds, minimum hits for named SystemVerilog coverpoints, and validated
+reviewed exclusions. It can consume existing Verilator simulation or PyUVM HDL
+coverage, or request a dedicated Verilator rerun. Its machine-readable summary
+identifies every unmet requirement and is indexed by the release manifest.
+
+See [Coverage qualification](coverage-qualification.md) for the policy schema,
+source selection, formal behavior, limitations, and migration examples.
+
+### Portable static intent
+
+- **ID:** `static_intent`
+- **Target:** `make open-static-intent`
+- **Adapter:** [`flows/static_intent/run.sh`](../flows/static_intent/run.sh)
+- **Inputs:** `STATIC_INTENT_CONFIG` and its selected module-owned SDC and UPF
+- **Reports:** `sdc-findings.json`, `upf-findings.json`, `summary.json`, and
+  `status.txt` below `reports/static_intent/`
+
+This optional gate captures a safe, documented Tcl subset without executing the
+module-owned files. It checks timing policy profiles, constrained ports,
+declared asynchronous exceptions, profile consistency, low-power resources,
+power states, and required or forbidden strategies. Unsupported commands and
+options are explicit failures.
+
+This flow is not STA, OpenSTA, PrimeTime, IEEE 1801, or VC LP signoff. See
+[Portable SDC and UPF intent](static-intent.md) for the schema, supported command
+subset, fixtures, and technology-signoff boundary.
+
+### Negative-test qualification
+
+- **ID:** `negative_qualification`
+- **Target:** `make open-negative`
+- **Adapter:** [`flows/qualification/run.sh`](../flows/qualification/run.sh)
+- **Inputs:** `QUALIFICATION_CAMPAIGN_MANIFEST` and module-owned fault fixtures
+- **Reports:** aggregate and per-case JSON, status, command, compile, and run evidence
+
+This optional gate proves that declared simulation mutations, assertion faults,
+invalid parameters, and inequivalent candidates are detected for the expected
+reason. Every fault references a passing nominal control. The runner rejects an
+escaped fault and distinguishes unrelated infrastructure failures from expected
+design-check failures.
+
+### Four-state qualification
+
+- **ID:** `four_state_qualification`
+- **Target:** `make open-four-state`
+- **Adapter:** [`flows/qualification/run.sh`](../flows/qualification/run.sh)
+- **Simulator:** pinned Icarus and VVP from OSS CAD Suite
+- **Inputs:** `QUALIFICATION_CAMPAIGN_MANIFEST` and module-owned four-state stimulus
+- **Reports:** aggregate and per-case JSON, status, command, compile, and run evidence
+
+This optional gate injects declared X/Z values into control inputs and requires
+a specific monitor diagnostic. A separate disabled-monitor control proves that
+the illegal stimulus reaches the design without an unrelated failure. It does
+not change the two-state Verilator simulation contract.
+
+See [Negative-test and four-state qualification](qualification-campaigns.md)
+for the manifest schema, case semantics, evidence, and migration guidance.
+
 ### OpenROAD physical implementation
 
 - **ID:** `openroad`
 - **Target:** `make open-physical`
 - **Adapter:** [`flows/openroad/run.sh`](../flows/openroad/run.sh)
-- **Inputs:** `OPENROAD_FLOW_ROOT`, `OPENROAD_CONFIG`, PDK and platform collateral
-- **Reports:** `reports/openroad/run.log`, `status.txt`
-- **Work products:** managed by the selected OpenROAD Flow Scripts checkout
+- **Inputs:** `OPENROAD_CONFIG`, `OPENROAD_CONSTRAINT_FILE`,
+  `OPENROAD_EVIDENCE_POLICY`, platform and PDK collateral
+- **Reports:** `reports/openroad/run.log`, `evidence.json`, `status.txt`
+- **Work products:** `work/openroad/{results,reports,logs,objects}/<platform>/<design>/<variant>/`
 
 This optional adapter invokes OpenROAD Flow Scripts with the module-owned design
 configuration. It is not part of `make open-source` because it requires a
 selected PDK, compatible libraries, LEF data, and physical constraints.
 
-Set `OPENROAD_FLOW_ROOT` to a qualified OpenROAD Flow Scripts checkout. The
-module configuration must select its platform, top, source files, SDC, and
-physical targets. The exact physical result hierarchy is owned by OpenROAD Flow
-Scripts rather than copied into the module's `work/openroad/` directory.
+Set `OPENROAD_EXECUTION_MODE=local` and `OPENROAD_FLOW_ROOT` for a qualified
+checkout, or select `container` to use the methodology's immutable ORFS image.
+The module configuration selects its platform, top, source files, SDC, physical
+targets, expected artifacts, parsed metrics, and acceptance thresholds. The
+adapter isolates ORFS outputs below the selected module and profile work root,
+runs a container with the invoking UID and GID, and hashes accepted outputs.
+
+See [Containerized OpenROAD](openroad.md) for the complete configuration,
+policy, evidence, CI, and non-signoff contract.
 
 More information: [OpenROAD Flow](https://openroad-flow-scripts.readthedocs.io/en/latest/mainREADME.html)
 and its [configuration tutorial](https://openroad-flow-scripts.readthedocs.io/en/latest/tutorials/FlowTutorial.html).

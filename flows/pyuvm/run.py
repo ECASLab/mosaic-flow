@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import shlex
@@ -205,6 +206,13 @@ def main() -> None:
         raise FileNotFoundError(f"Missing PyUVM HDL sources: {', '.join(missing_sources)}")
 
     build_args, test_args = simulator_arguments(simulator, coverage, work_dir)
+    raw_parameters = json.loads(os.environ.get("PROFILE_PARAMETERS_JSON", "{}"))
+    if not isinstance(raw_parameters, dict):
+        raise ValueError("PROFILE_PARAMETERS_JSON must contain a JSON object")
+    parameters = {
+        name: int(value) if isinstance(value, bool) else value
+        for name, value in raw_parameters.items()
+    }
     test_path = Path(os.environ.get("PYUVM_TEST_PATH", module_root / "verif" / "pyuvm"))
     python_path = [str(test_path.resolve())]
     if os.environ.get("PYTHONPATH"):
@@ -221,6 +229,7 @@ def main() -> None:
         sources=sources,
         includes=includes,
         defines=defines,
+        parameters=parameters,
         build_args=build_args,
         hdl_toplevel=os.environ["PYUVM_TOP"],
         always=True,

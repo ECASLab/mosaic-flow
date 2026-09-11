@@ -4,7 +4,11 @@ if {[info exists env(TECH_SETUP_TCL)] && $env(TECH_SETUP_TCL) ne ""} {
 
 set_svf $env(WORK_DIR)/synopsys_synthesis/$env(DESIGN_TOP).svf
 analyze -format sverilog -vcs "-f $env(RTL_FILELIST)"
-elaborate $env(DESIGN_TOP)
+if {[info exists env(PROFILE_DC_PARAMETERS)] && $env(PROFILE_DC_PARAMETERS) ne ""} {
+  elaborate $env(DESIGN_TOP) -parameters $env(PROFILE_DC_PARAMETERS)
+} else {
+  elaborate $env(DESIGN_TOP)
+}
 current_design $env(DESIGN_TOP)
 link
 source $env(CONSTRAINT_DIR)/timing.sdc

@@ -38,6 +38,8 @@ Complete portable fixture integration:
 
 ```sh
 make -C tests/fixture-module FLOW_ROOT="$PWD" clean open-source
+tests/test_release_manifest.sh
+tests/test_coverage_qualification.sh
 ```
 
 Review `tests/fixture-module/reports/` when integration fails. Do not use the
@@ -181,6 +183,50 @@ Add a focused regression for each bug fixed in orchestration or gate logic.
 `.github/workflows/flow-quality.yml` must remain independent from private module
 repositories. It uses `tests/fixture-module/` and qualifies both shell-level
 policy and the complete portable EDA path.
+
+`tests/fixture-multi-module/` separately qualifies registry validation,
+selection, fallback resolution, concurrent execution, and output isolation.
+Update `tests/test_multi_module.sh` whenever the manifest or project bootstrap
+contract changes.
+
+`tests/fixture-parameter-profiles/` qualifies boundary widths, feature toggles,
+backend parameter translation, profile-local formal and equivalence inputs,
+concurrent execution, and aggregate evidence. Update
+`tests/test_parameter_profiles.sh` whenever the profile schema changes.
+
+`tests/test_release_manifest.sh` builds a temporary consumer repository and
+qualifies manifest generation, deterministic comparison, input hashing,
+approved skips, supplemental gates, dirty-tree policy, and negative status and
+revision handling. The workflow runs it both natively and in the pinned
+container job. Extend this fixture whenever the release schema or policy
+changes.
+
+`tests/check_fixture_release_manifest.sh` checks the complete portable fixture
+after real tool execution. It requires every canonical flow decision, portable
+tool identity, representative design input, both coverage classes, and the
+human-readable summary to be present in the generated release artifact.
+
+`tests/test_coverage_qualification.sh` exercises complete and deficient HDL
+evidence, malformed requirements, valid and stale exclusions, missing named
+coverpoints, formal reachability failure, and explicit flow statuses. The
+workflow runs this fixture both natively and in the pinned container job.
+`tests/test_coverage_unreachable_formal.sh` additionally runs a deliberately
+unreachable cover statement through SymbiYosys in the EDA integration job and
+requires the canonical flow to record `FAIL` before restoring passing evidence.
+
+`tests/test_qualification_campaigns.sh` exercises detected and escaped
+mutations, expected inequivalence, unrelated tool failure, detected unknown
+controls, a broken monitor, failed controls, and explicit disabled statuses.
+The complete fixture additionally compiles and runs an X/Z campaign with the
+pinned Icarus simulator. Both methodology fixtures run in native CI, while the
+tool-independent positive and negative cases also run in the pinned container.
+
+`tests/test_static_intent.sh` covers sequential, combinational, generated-clock,
+reset-synchronizer, always-on, isolation, level-shifting, and retention intent.
+Its negative cases require actionable failures for missing constraints, broad
+exceptions, duplicates, conflicts, profile mismatches, incomplete power states,
+forbidden strategies, and unsupported commands. The same test runs natively and
+inside the pinned container without an EDA license.
 
 When editing workflow YAML or shell scripts, run `ci/check_flow_quality.sh`. It
 uses pinned ShellCheck and actionlint versions installed by

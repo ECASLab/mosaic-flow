@@ -1,0 +1,15 @@
+set_design_top retention_fixture
+create_power_domain PD_RETENTION -include_scope
+create_supply_port VDD_MAIN -domain PD_RETENTION
+create_supply_port VDD_RETENTION -domain PD_RETENTION
+create_supply_port VSS -domain PD_RETENTION
+create_supply_net VDD_MAIN -domain PD_RETENTION
+create_supply_net VDD_RETENTION -domain PD_RETENTION
+create_supply_net VSS -domain PD_RETENTION
+connect_supply_net VDD_MAIN -ports VDD_MAIN
+connect_supply_net VDD_RETENTION -ports VDD_RETENTION
+connect_supply_net VSS -ports VSS
+set_domain_supply_net PD_RETENTION -primary_power_net VDD_MAIN -primary_ground_net VSS
+add_port_state VDD_MAIN -state {MAIN_ON 0.8} -state {MAIN_OFF off}
+create_pst PST_RETENTION -supplies {VDD_MAIN VDD_RETENTION}
+add_pst_state RETAINED -pst PST_RETENTION -state {MAIN_OFF}

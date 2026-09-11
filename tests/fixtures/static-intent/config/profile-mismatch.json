@@ -1,0 +1,29 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "sdc": {
+    "profiles": [
+      {
+        "name": "synthesis",
+        "path": "sdc/sequential.sdc",
+        "kind": "sequential",
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_n"], "to_ports": []}
+        ]
+      },
+      {
+        "name": "physical",
+        "path": "sdc/physical-mismatch.sdc",
+        "kind": "sequential",
+        "intentional_exceptions": [
+          {"command": "set_false_path", "from_ports": ["rst_n"], "to_ports": []}
+        ]
+      }
+    ],
+    "consistency": [
+      {
+        "profiles": ["synthesis", "physical"],
+        "commands": ["create_clock", "set_clock_uncertainty", "set_input_delay", "set_output_delay"]
+      }
+    ]
+  }
+}

@@ -50,13 +50,164 @@ jobs:
       - name: Validate PyUVM fixture evidence
         run: tests/check_fixture_pyuvm_evidence.sh
 
+      - name: Verify reusable and dedicated coverage sources
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            COVERAGE_QUALIFICATION_SOURCE=pyuvm_open_source \
+            FLOW_DEPENDENCIES_coverage_qualification=pyuvm_open_source \
+            open-coverage
+          grep -Fq '"source": "pyuvm_open_source"' \
+            tests/fixture-module/reports/coverage_qualification/summary.json
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            COVERAGE_QUALIFICATION_SOURCE=dedicated \
+            FLOW_DEPENDENCIES_coverage_qualification= \
+            open-coverage
+          grep -Fq '"source": "dedicated"' \
+            tests/fixture-module/reports/coverage_qualification/summary.json
+
       - name: Verify SystemVerilog assertion failure propagation
         run: tests/test_pyuvm_assertion_failure.sh
+
+      - name: Verify unreachable formal cover failure propagation
+        run: tests/test_coverage_unreachable_formal.sh
+
+      - name: Run complete multi-module fixture flow
+        run: |
+          make -C tests/fixture-multi-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" clean all-modules MODULE_JOBS=2
+
+      - name: Run complete parameter-profile fixture flow
+        run: |
+          make -C tests/fixture-parameter-profiles \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" clean all-profiles PROFILE_JOBS=4
+
+      - name: Validate parameter-profile fixture evidence
+        run: tests/check_fixture_parameter_profile_evidence.sh
+
+      - name: Generate release evidence for the complete fixture
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            DISABLED_FLOWS="openroad vcs_sim pyuvm_commercial vc_lint vc_cdc sg_cdc sg_dft vc_lp synopsys_synthesis synopsys_primetime synopsys_primepower" \
+            MODULE_REVISION="${GITHUB_SHA}" \
+            METHODOLOGY_REVISION="${GITHUB_SHA}" \
+            release-manifest release-manifest-validate
+
+      - name: Validate complete fixture release evidence contents
+        run: EXPECT_CLEAN_RELEASE=true tests/check_fixture_release_manifest.sh
 
       - name: Upload fixture reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mosaic-flow-fixture-reports
-          path: tests/fixture-module/reports/
+          path: |
+            tests/fixture-module/reports/
+            tests/fixture-multi-module/reports/
+            tests/fixture-parameter-profiles/reports/
+          if-no-files-found: error
+
+  multi-module-container:
+    name: Containerized multi-module orchestration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container: python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+
+    steps:
+      - name: Install container test dependencies
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends findutils git make
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Check out mosaic-flow
+        uses: actions/checkout@v4
+
+      - name: Run multi-module orchestration tests
+        run: |
+          tests/test_multi_module.sh
+          tests/test_parameter_profiles.sh
+          tests/test_coverage_qualification.sh
+          tests/test_qualification_campaigns.sh
+          tests/test_static_intent.sh
+
+      - name: Run containerized release-manifest fixture
+        run: FIXTURE_CONTEXT=container tests/test_release_manifest.sh
+
+  openroad-container:
+    name: Containerized Nangate45 physical fixture
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out mosaic-flow
+        uses: actions/checkout@v4
+
+      - name: Cache pinned OpenROAD image layers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mosaic/openroad-images
+          key: openroad-image-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('config/tool-versions.env') }}
+
+      - name: Prepare pinned OpenROAD image
+        run: ci/cache_openroad_image.sh
+
+      - name: Run Nangate45 fixture
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            OPENROAD_EXECUTION_MODE=container \
+            open-physical
+
+      - name: Validate physical evidence and ownership
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          evidence = json.loads(
+              pathlib.Path("tests/fixture-module/reports/openroad/evidence.json").read_text()
+          )
+          assert evidence["status"] == "PASS"
+          assert evidence["design"]["platform"] == "nangate45"
+          assert evidence["execution"]["mode"] == "container"
+          assert evidence["execution"]["image"]["reference"].endswith(
+              "@" + evidence["execution"]["image"]["digest"]
+          )
+          assert {item["name"] for item in evidence["artifacts"]} == {
+              "final_def", "final_gds", "final_netlist", "final_odb", "final_sdc"
+          }
+          assert all(item["passed"] for item in evidence["metrics"])
+          PY
+          if find tests/fixture-module/work/openroad -not -user "$(id -un)" -print -quit | grep -q .; then
+            echo "Containerized OpenROAD produced files owned by another user" >&2
+            exit 1
+          fi
+
+      - name: Index physical evidence in release manifest
+        run: |
+          make -C tests/fixture-module \
+            FLOW_ROOT="${GITHUB_WORKSPACE}" \
+            DISABLED_FLOWS="verible_lint verible_format slang_elaboration verilator_lint yosys_synthesis symbiyosys_formal eqy_equivalence verilator_sim pyuvm_open_source coverage_qualification negative_qualification four_state_qualification static_intent vcs_sim pyuvm_commercial vc_lint vc_cdc sg_cdc sg_dft vc_lp synopsys_synthesis synopsys_primetime synopsys_primepower" \
+            MODULE_REVISION="${GITHUB_SHA}" \
+            METHODOLOGY_REVISION="${GITHUB_SHA}" \
+            RELEASE_EXECUTION_CONTEXT=container \
+            RELEASE_TECHNOLOGY=nangate45 \
+            release-manifest release-manifest-validate
+          grep -Fq 'reports/openroad/evidence.json' \
+            tests/fixture-module/reports/release_manifest/container/manifest.json
+
+      - name: Upload physical fixture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosaic-flow-openroad-nangate45
+          path: |
+            tests/fixture-module/reports/openroad/
+            tests/fixture-module/reports/release_manifest/container/
+            tests/fixture-module/work/openroad/results/
+            tests/fixture-module/work/openroad/reports/
+            tests/fixture-module/work/openroad/logs/
           if-no-files-found: error

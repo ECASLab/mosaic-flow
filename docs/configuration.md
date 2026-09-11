@@ -11,6 +11,16 @@
 | Module `config/flows.mk` | Module | Enabled and disabled flows, dependency overrides |
 | Module `flows/<name>/...` | Module | Tool-specific design intent and waivers |
 
+Multi-module repositories replace the two module configuration rows with
+`config/modules.json`, `config/modules/<module>.mk`, and
+`config/modules/<module>-flows.mk`. The complete contract is documented in
+[Multi-module projects](multi-module-projects.md).
+
+A parameterized module may add `config/parameter-profiles.json`. Multi-module
+repositories use `config/parameter-profiles/<module>.json`. See
+[Parameter-profile qualification](parameter-profiles.md) for the schema and
+execution contract.
+
 ## Precedence and override rules
 
 Shared flow defaults use `?=`. The module's `config/flows.mk` is included after
@@ -95,10 +105,16 @@ The default dependencies represent direct artifact consumption:
 | Flow | Default dependencies | Reason |
 | --- | --- | --- |
 | `eqy_equivalence` | `yosys_synthesis` | EQY reads the Yosys netlist |
+| `coverage_qualification` | `verilator_sim` | Qualification reads normal simulation coverage by default |
+| `negative_qualification` | None | Cases own their compile and run commands |
+| `four_state_qualification` | None | Cases compile independently with Icarus |
+| `static_intent` | None | The validator reads module-owned SDC, UPF, and expectations directly |
 | `synopsys_primetime` | `synopsys_synthesis` | PrimeTime reads the synthesis DDC and SDC |
 | `synopsys_primepower` | `vcs_sim synopsys_synthesis` | PrimePower reads SAIF activity plus synthesis DDC and SDC |
 
-All other default lists are empty. A project may add policy dependencies even
+All other default lists are empty. Select `pyuvm_open_source` as the coverage
+dependency when qualifying PyUVM evidence, or clear the list for a dedicated
+coverage run. A project may add policy dependencies even
 when no file is directly consumed. For example:
 
 ```make
@@ -160,9 +176,26 @@ The shared environment adapter requires these variables for every tool adapter:
 | `PROPERTY_FILELIST` | Shared SystemVerilog property and sequence dependencies |
 | `ASSERTION_FILELIST` | Shared SystemVerilog assertion and bind file list |
 | `COVERAGE_FILELIST` | Shared SystemVerilog coverage model and bind file list |
+| `COVERAGE_QUALIFICATION_POLICY` | Versioned JSON policy for HDL and formal coverage qualification |
+| `COVERAGE_QUALIFICATION_SOURCE` | Existing HDL evidence source or `dedicated` rerun |
+| `QUALIFICATION_CAMPAIGN_MANIFEST` | Versioned negative-test and four-state campaign declarations |
+| `STATIC_INTENT_CONFIG` | Versioned SDC and UPF expectation declarations |
 | `CONSTRAINT_DIR` | Directory containing synthesis `timing.sdc` |
 | `REPORT_DIR` | Root for persistent, reviewable results |
 | `WORK_DIR` | Root for disposable tool databases and generated netlists |
+| `PARAMETER_PROFILE_MANIFEST` | Optional module-owned profile manifest path |
+| `PROFILE` | Selected named profile for one invocation |
+| `PROFILE_TARGET` | Target dispatched by `all-profiles`, default `open-source` |
+| `PROFILE_JOBS` | Maximum concurrent profile jobs, default `JOBS` or `0` |
+
+When `PROFILE` is selected, the flow exports `PROFILE_PARAMETERS_JSON`,
+`PROFILE_APPLICABLE_FLOWS`, and `MOSAIC_PROFILE_ACTIVE` to adapters. These are
+methodology implementation variables and should not be assigned by consumers.
+The selected name is appended to `REPORT_DIR` and `WORK_DIR` after module
+selection.
+
+When `mk/project.mk` selects a manifest entry, `REPORT_DIR` and `WORK_DIR`
+default to `reports/<module>` and `work/<module>`.
 
 Flow-specific inputs are required when their flow is enabled:
 
@@ -175,6 +208,8 @@ Flow-specific inputs are required when their flow is enabled:
 | `FORMAL_COVER_CONFIG` | SymbiYosys cover reachability task |
 | `EQUIVALENCE_CONFIG` | EQY |
 | `OPENROAD_CONFIG` | OpenROAD Flow Scripts |
+| `OPENROAD_CONSTRAINT_FILE` | OpenROAD Flow Scripts and physical evidence |
+| `OPENROAD_EVIDENCE_POLICY` | OpenROAD physical evidence qualification |
 | `SYNTHESIS_CONSTRAINT_FILE` | Module convention for synthesis SDC |
 | `CDC_CONFIG` | VC CDC or SpyGlass CDC adapter |
 | `DFT_CONFIG` | SpyGlass DFT adapter |
@@ -194,6 +229,42 @@ Flow-specific inputs are required when their flow is enabled:
 | `PYUVM_RUN_ARGS` | Additional shell-parsed simulator run arguments |
 | `PYUVM_PLUSARGS` | Additional shell-parsed HDL plusargs |
 | `SIM_COVERAGE` | Enable native coverage in normal simulation |
+| `COVERAGE_QUALIFICATION_TOOL` | Shared coverage policy validator, normally not overridden |
+| `QUALIFICATION_CAMPAIGN_TOOL` | Shared campaign validator and runner, normally not overridden |
+| `STATIC_INTENT_TOOL` | Shared non-executing SDC and UPF validator, normally not overridden |
+| `IVERILOG_CMD` | Icarus compiler used for four-state qualification |
+| `VVP_CMD` | Icarus runtime used for four-state qualification |
+
+## Release evidence variables
+
+The shared `release-manifest` target derives its standard input set from the
+design, flow, filelist, constraint, waiver, formal, physical, and power-intent
+variables above. These variables extend or qualify the release record:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `RELEASE_MODULE_NAME` | `MODULE` or `DESIGN_TOP` | Stable module identity |
+| `MODULE_REVISION` | Empty | Explicit 40-digit module commit, required in CI |
+| `METHODOLOGY_REVISION` | Empty | Explicit 40-digit `mosaic-flow` commit, required in CI |
+| `RELEASE_EXECUTION_CONTEXT` | `native` | Context label and output namespace |
+| `RELEASE_ALLOW_DIRTY` | `disabled` | Permit and record a dirty tree for local diagnostics |
+| `RELEASE_MODULE_DIRTY` | Empty | Explicit packaged-module dirty-state attestation |
+| `RELEASE_METHODOLOGY_DIRTY` | Empty | Explicit packaged-methodology dirty-state attestation |
+| `RELEASE_TECHNOLOGY` | `technology-independent` | Technology context name |
+| `RELEASE_TECHNOLOGY_METADATA_JSON` | `{}` | PDK, library, corner, or technology details |
+| `RELEASE_METADATA_JSON` | `{}` | Deterministic module-owned annotations |
+| `RELEASE_EXECUTION_METADATA_JSON` | `{}` | Volatile runner or container annotations |
+| `RELEASE_SUPPLEMENTAL_GATES` | Empty | Required module-owned status IDs |
+| `RELEASE_ADDITIONAL_INPUTS` | Empty | Extra required files or directories to hash |
+| `RELEASE_ADDITIONAL_EVIDENCE` | Empty | Extra generated files to index and hash |
+| `RELEASE_ADDITIONAL_TOOLS_JSON` | `[]` | Extra tool version commands and associated flows |
+| `RELEASE_COVERAGE_EVIDENCE_JSON` | `[]` | Extra coverage kind, producer, and path records |
+| `RELEASE_MANIFEST_DIR` | `REPORT_DIR/release_manifest/<context>` | Manifest output directory |
+
+`RELEASE_INPUT_FILES` and `RELEASE_FILELISTS` are exported derived lists used
+by the generator. Consumers should extend `RELEASE_ADDITIONAL_INPUTS` instead
+of replacing these implementation variables. The JSON formats and release
+policy are documented in [Release evidence](release-evidence.md).
 
 PyUVM is opt-in. A module enables its portable and commercial policies
 independently:
@@ -257,6 +328,12 @@ When `COVERAGE_FILELIST` is nonempty, `FORMAL_COVER_CONFIG` is required and
 defaults to `enabled`. Verilator exports `coverage.dat` and `coverage.info`,
 while VCS retains its native `coverage.vdb` database.
 
+Enable `FLOW_coverage_qualification` to turn this collected evidence into a
+policy decision. Configure its source and matching dependency together, then
+declare thresholds, named coverpoints, exclusions, and optional formal
+reachability in `COVERAGE_QUALIFICATION_POLICY`. See
+[Coverage qualification](coverage-qualification.md) for the complete contract.
+
 The current Design Compiler adapter reads
 `$(CONSTRAINT_DIR)/timing.sdc`. Keep `SYNTHESIS_CONSTRAINT_FILE` consistent with
 that path until the adapter is changed to consume the variable directly.
@@ -269,7 +346,16 @@ that path until the adapter is changed to consume the variable directly.
 | `TARGET_LIBRARY` | Site or project target libraries when used by setup Tcl |
 | `LINK_LIBRARY` | Site or project link libraries when used by setup Tcl |
 | `OPERATING_CONDITION` | Requested timing or power corner when used by setup Tcl |
-| `OPENROAD_FLOW_ROOT` | Checkout root of OpenROAD Flow Scripts |
+| `OPENROAD_EXECUTION_MODE` | `local` checkout or pinned `container` execution |
+| `OPENROAD_FLOW_ROOT` | Checkout root of OpenROAD Flow Scripts in local mode |
+| `OPENROAD_CONTAINER_RUNTIME` | OCI runtime command, `docker` by default |
+| `OPENROAD_ORFS_IMAGE` | Immutable `image@sha256:<digest>` ORFS reference |
+| `OPENROAD_PLATFORM` | Selected ORFS platform, `nangate45` by default |
+| `OPENROAD_FLOW_VARIANT` | Stable ORFS output variant, `base` by default |
+| `OPENROAD_DESIGN_NAME` | Design nickname, `DESIGN_TOP` by default |
+| `OPENROAD_CONFIG` | Module-owned ORFS Make configuration |
+| `OPENROAD_CONSTRAINT_FILE` | Exact module-owned SDC supplied to ORFS |
+| `OPENROAD_EVIDENCE_POLICY` | Module-owned artifact and metric policy |
 
 The shared Tcl currently sources `TECH_SETUP_TCL` when it is nonempty. The other
 technology variables are exported for the site setup to consume. Their exact
@@ -308,9 +394,27 @@ make synopsys-synth
 | `PRIMETIME_BIN` | `pt_shell` | PrimeTime |
 | `PRIMEPOWER_BIN` | `pt_shell` | PrimePower |
 
-The current OpenROAD wrapper invokes the OpenROAD Flow Scripts Makefile. It
-uses `OPENROAD_FLOW_ROOT` and `OPENROAD_CONFIG` rather than invoking
-`OPENROAD_CMD` directly.
+The OpenROAD wrapper invokes the ORFS Makefile locally or through the immutable
+container pin. `OPENROAD_CMD` remains reserved for direct integrations. See
+[Containerized OpenROAD](openroad.md) for execution and evidence details.
+
+`VERIBLE_FORMAT_ARGS` provides whitespace-separated formatter options such as
+`--indentation_spaces=4`. `VERIBLE_FORMAT_PATHS` selects the module-owned files
+or directories checked by the formatting flow and defaults to `rtl verif`.
+
+## Multi-module variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MODULE_MANIFEST` | `$(MODULE_ROOT)/config/modules.json` | Versioned module registry |
+| `MODULE` | Empty | Selected manifest entry for one flow invocation |
+| `TARGET` | `open-source` | Target dispatched by `all-modules` |
+| `MODULE_JOBS` | `JOBS` or `0` | Maximum concurrent module invocations; zero means unbounded |
+| `MODULE_DESIGN_CONFIG` | `config/modules/<MODULE>.mk` | Selected design profile |
+| `MODULE_FLOW_CONFIG` | `config/modules/<MODULE>-flows.mk` | Selected flow policy |
+
+Use `mk/project.mk` to activate these variables. The legacy single-module
+import remains supported without a manifest.
 
 ## Open-source tool cache
 

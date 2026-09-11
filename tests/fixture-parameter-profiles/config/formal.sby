@@ -1,0 +1,14 @@
+[options]
+mode prove
+depth 2
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal -sv profile_fixture.sv profile_fixture_formal.sv
+prep -top profile_fixture_formal
+
+[files]
+rtl/profile_fixture.sv
+verif/formal/profile_fixture_formal.sv

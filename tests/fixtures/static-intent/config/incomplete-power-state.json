@@ -1,0 +1,13 @@
+{
+  "schema": "mosaic-static-intent-v1",
+  "upf": {
+    "path": "upf/incomplete-power-state.upf",
+    "top": "retention_fixture",
+    "mode": "boundary",
+    "required": {
+      "power_domains": ["PD_RETENTION"],
+      "power_state_tables": ["PST_RETENTION"]
+    },
+    "forbidden_strategies": []
+  }
+}
